@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Racing Team Portal</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header>
+    <div class="nav-container">
+      <!-- TEAM NAME GOES HERE -->
+      <div class="logo">Apex Racing</div>
+      <nav>
+        <a href="#stream">Live</a>
+        <a href="#standings">Standings</a>
+        <a href="#blog">Recaps</a>
+        <a href="#community">Community</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    
+    <!-- Live Stream & Schedule -->
+    <section id="stream" class="grid-2">
+      <div class="card">
+        <h2>Live Broadcast</h2>
+        <div class="embed-container">
+          <!-- IMPORTANT TWITCH SETTINGS BELOW -->
+          <iframe
+            src="https://player.twitch.tv/?channel=YOUR_TWITCH_CHANNEL&parent=YOUR-ACCOUNT-NAME.github.io"
+            height="350"
+            width="100%"
+            allowfullscreen="true">
+          </iframe>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Weekly Schedule</h2>
+        <ul class="schedule-list">
+          <li><span>Monday 18:00</span> Ferrari F Series</li>
+          <li><span>Wednesday 19:00</span> The Anvil Scrims</li>
+          <li><span>Saturday 16:00</span> Championship Round 4</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Championship Standings -->
+    <section id="standings" class="card">
+      <h2>Championship Standings — Season 1</h2>
+      <table class="standings-table">
+        <thead>
+          <tr>
+            <th>Pos</th>
+            <th>Driver</th>
+            <th>Team</th>
+            <th>Points</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td>A. Bender</td>
+            <td>Red Faction Racing</td>
+            <td>125</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>S. Happe</td>
+            <td>Talbot Esports</td>
+            <td>110</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- News & Blog Cards -->
+    <section id="blog">
+      <h2>Latest Race Recaps</h2>
+      <div class="grid-3">
+        <article class="card news-card">
+          <span class="badge">Recap</span>
+          <h3>Ferrari F Series — Croft Circuit</h3>
+          <p>Wet weather chaos hit the final laps of round 3 at Croft. Check out the full driver breakdown.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- Discord Community -->
+    <section id="community" class="grid-2">
+      <div class="card">
+        <h2>Join the Discord</h2>
+        <p>Connect with other drivers, access setups, and register for upcoming league races.</p>
+        <iframe 
+          src="https://discord.com/widget?id=YOUR_DISCORD_SERVER_ID&theme=dark" 
+          width="100%" 
+          height="300" 
+          allowtransparency="true" 
+          frameborder="0">
+        </iframe>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Apex Racing Hub. Built free with GitHub Pages.</p>
+  </footer>
+
+</body>
+</html>
