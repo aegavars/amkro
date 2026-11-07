@@ -3,20 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Racing Team Portal</title>
+  <title>AMK Racing Organization</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
 
-  <!-- Top Navigation -->
+  <!-- Navigation -->
   <header>
     <div class="nav-container">
-      <!-- TEAM NAME GOES HERE -->
-      <div class="logo">Apex Racing</div>
+      <div class="logo">AMK RACING <span>ORGANIZATION</span></div>
       <nav>
-        <a href="#stream">Live</a>
+        <a href="#stream">Broadcast</a>
         <a href="#standings">Standings</a>
-        <a href="#blog">Recaps</a>
+        <a href="#blog">News & Recaps</a>
         <a href="#community">Community</a>
       </nav>
     </div>
@@ -24,34 +23,44 @@
 
   <main class="container">
     
-    <!-- Live Stream & Schedule -->
+    <!-- Hero Banner / Identity -->
+    <section class="hero-card card">
+      <h1>AMK RACING ORGANIZATION</h1>
+      <p class="subtitle">Official Esports Hub & Sim Racing Championship Portal</p>
+    </section>
+
+    <!-- Live Stream & Weekly Schedule -->
     <section id="stream" class="grid-2">
       <div class="card">
         <h2>Live Broadcast</h2>
-        <div class="embed-container">
-          <!-- IMPORTANT TWITCH SETTINGS BELOW -->
+        <div class="embed-placeholder">
+          <p class="placeholder-text">Live stream broadcast placeholder</p>
+          <span class="sub-text">Add your Twitch channel name in index.html to activate</span>
+          <!-- 
+          To activate your Twitch embed, replace the div above with this iframe:
           <iframe
-            src="https://player.twitch.tv/?channel=YOUR_TWITCH_CHANNEL&parent=YOUR-ACCOUNT-NAME.github.io"
+            src="https://player.twitch.tv/?channel=YOUR_TWITCH_CHANNEL&parent=aegavars.github.io"
             height="350"
             width="100%"
             allowfullscreen="true">
           </iframe>
+          -->
         </div>
       </div>
 
       <div class="card">
         <h2>Weekly Schedule</h2>
         <ul class="schedule-list">
-          <li><span>Monday 18:00</span> Ferrari F Series</li>
-          <li><span>Wednesday 19:00</span> The Anvil Scrims</li>
-          <li><span>Saturday 16:00</span> Championship Round 4</li>
+          <li><span>TBD</span> TBA Event — 00:00 UTC</li>
+          <li><span>TBD</span> TBA Event — 00:00 UTC</li>
+          <li><span>TBD</span> TBA Event — 00:00 UTC</li>
         </ul>
       </div>
     </section>
 
-    <!-- Championship Standings -->
+    <!-- Championship Standings Placeholder -->
     <section id="standings" class="card">
-      <h2>Championship Standings — Season 1</h2>
+      <h2>AMK Series Standings</h2>
       <table class="standings-table">
         <thead>
           <tr>
@@ -63,53 +72,9 @@
         </thead>
         <tbody>
           <tr>
-            <td>1</td>
-            <td>A. Bender</td>
-            <td>Red Faction Racing</td>
-            <td>125</td>
+            <td>—</td>
+            <td>—</td>
+            <td>—</td>
+            <td>—</td>
           </tr>
           <tr>
-            <td>2</td>
-            <td>S. Happe</td>
-            <td>Talbot Esports</td>
-            <td>110</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
-
-    <!-- News & Blog Cards -->
-    <section id="blog">
-      <h2>Latest Race Recaps</h2>
-      <div class="grid-3">
-        <article class="card news-card">
-          <span class="badge">Recap</span>
-          <h3>Ferrari F Series — Croft Circuit</h3>
-          <p>Wet weather chaos hit the final laps of round 3 at Croft. Check out the full driver breakdown.</p>
-        </article>
-      </div>
-    </section>
-
-    <!-- Discord Community -->
-    <section id="community" class="grid-2">
-      <div class="card">
-        <h2>Join the Discord</h2>
-        <p>Connect with other drivers, access setups, and register for upcoming league races.</p>
-        <iframe 
-          src="https://discord.com/widget?id=YOUR_DISCORD_SERVER_ID&theme=dark" 
-          width="100%" 
-          height="300" 
-          allowtransparency="true" 
-          frameborder="0">
-        </iframe>
-      </div>
-    </section>
-
-  </main>
-
-  <footer>
-    <p>&copy; 2026 Apex Racing Hub. Built free with GitHub Pages.</p>
-  </footer>
-
-</body>
-</html>
