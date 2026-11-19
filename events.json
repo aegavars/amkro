@@ -1,0 +1,14 @@
+{
+  "_note": "Edit this file after each new race. The site shows the next upcoming event, or the most recent one if none is upcoming. 'start' must be an ISO date with timezone. 'thumbnail' is an image URL or a file in this repo (e.g. images/race.jpg).",
+  "events": [
+    {
+      "name": "PLACEHOLDER: replace with your race name",
+      "start": "2026-11-26T19:00:00+01:00",
+      "durationHours": 2,
+      "thumbnail": "",
+      "url": "https://paddock.worldsimseries.com/organizations/2b746de0d67e2930b18aacfa19e07eeb#/events",
+      "description": "Copy the details from the WorldSimSeries Paddock event page."
+    }
+  ],
+  "instagramPosts": []
+}
