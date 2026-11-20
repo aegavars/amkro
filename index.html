@@ -15,6 +15,7 @@
   <a class="brand" href="#top"><span class="logo">A</span> AMKRO</a>
   <nav id="nav" aria-label="Main">
     <a href="#event">Race</a>
+    <a href="#standings">Standings</a>
     <a href="#instagram">Instagram</a>
     <a href="#youtube">YouTube</a>
     <a href="#racepedia">Racepedia</a>
@@ -56,50 +57,35 @@
 </section>
 
 <section id="event" class="block">
-  <h2>Latest race</h2>
-  <article class="event" id="eventCard">
-    <a class="event-thumb" id="eventThumb" href="#" target="_blank" rel="noopener" aria-label="Open race page"></a>
-    <div class="event-body">
-      <span class="tag" id="eventTag">Next race</span>
-      <h3 id="eventName">Loading…</h3>
-      <p class="muted" id="eventDate"></p>
-      <p class="muted" id="eventDesc"></p>
-      <div class="countdown">
-        <span class="label" id="eventCdLabel">Starts in</span>
-        <span id="eventCd">00 days : 00 hrs : 00 min : 00 sec</span>
-      </div>
-      <div class="cta">
-        <a class="btn primary" id="eventLink" href="https://paddock.worldsimseries.com/organizations/2b746de0d67e2930b18aacfa19e07eeb#/events" target="_blank" rel="noopener">Go to the race →</a>
-        <a class="btn" href="https://paddock.worldsimseries.com/organizations/2b746de0d67e2930b18aacfa19e07eeb#/events" target="_blank" rel="noopener">All events</a>
-      </div>
-    </div>
-  </article>
+  <h2>Upcoming races</h2>
+  <div class="event-list" id="eventList"><p class="muted">Loading races…</p></div>
+  <p><a class="btn" href="https://paddock.worldsimseries.com/organizations/2b746de0d67e2930b18aacfa19e07eeb#/events" target="_blank" rel="noopener">All events on Paddock →</a></p>
 </section>
 
-<section id="instagram" class="block alt">
-  <h2>Instagram</h2>
-  <div class="ig-grid">
-    <div>
-      <h3>Race announcements <small class="muted">@amkracingorganization</small></h3>
-      <p class="muted">New races from AMK Racing Organization.</p>
-      <iframe class="ig" title="AMK Racing Organization on Instagram" src="https://www.instagram.com/amkracingorganization/embed" loading="lazy" allowtransparency="true"></iframe>
-      <a class="btn" href="https://www.instagram.com/amkracingorganization/" target="_blank" rel="noopener">Open on Instagram →</a>
-    </div>
-    <div>
-      <h3>Entries &amp; results <small class="muted">@teamamkro</small></h3>
-      <p class="muted">Our race entries, results and the latest posts.</p>
-      <iframe class="ig" title="Team AMKRO on Instagram" src="https://www.instagram.com/teamamkro/embed" loading="lazy" allowtransparency="true"></iframe>
-      <a class="btn" href="https://www.instagram.com/teamamkro/" target="_blank" rel="noopener">Open on Instagram →</a>
-    </div>
+<section id="standings" class="block">
+  <h2>Series standings</h2>
+  <p class="muted">All current and finished AMKRO events. <span id="stUpdated"></span></p>
+  <div class="tools-row">
+    <input id="stSearch" type="search" placeholder="Search the series name…" aria-label="Search series">
+    <div class="chips" id="stChips"></div>
   </div>
-  <div id="igPosts" class="ig-posts"></div>
+  <div class="st-list" id="stList"><p class="muted">Loading…</p></div>
+</section>
+
+<section id="instagram" class="block alt ig-dark">
+  <h2>Instagram</h2>
+  <div class="ig-grid" id="igGrid">
+    <p class="muted">Loading…</p>
+  </div>
 </section>
 
 <section id="youtube" class="block">
   <h2>YouTube</h2>
-  <p class="muted">Latest uploads from AMK Racing Organisation, head organisation of the Tatuus World Series.</p>
-  <div class="yt">
-    <iframe title="AMK Racing Organisation uploads" src="https://www.youtube.com/embed/videoseries?list=UU-6zSmuerT4LvwzCy7MLNFA" loading="lazy" allowfullscreen></iframe>
+  <p class="muted">The three latest videos from AMK Racing Organisation, head organisation of the Tatuus World Series.</p>
+  <div class="yt-grid" id="ytGrid">
+    <div class="yt-item">
+      <div class="yt"><iframe title="AMK Racing Organisation videos" src="https://www.youtube-nocookie.com/embed/videoseries?list=UULF-6zSmuerT4LvwzCy7MLNFA" loading="lazy" allowfullscreen></iframe></div>
+    </div>
   </div>
   <p><a class="btn" href="https://www.youtube.com/@AMKRacingOrganisation" target="_blank" rel="noopener">Subscribe on YouTube →</a></p>
 </section>

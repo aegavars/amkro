@@ -1,0 +1,27 @@
+{
+  "_note": "Instagram cannot be read automatically. After each new post, update 'latest' (copy the post link, download the picture into images/ and use that path) and the follower numbers here.",
+  "accounts": [
+    {
+      "key": "organizer",
+      "handle": "amkracingorganization",
+      "name": "AMK Racing Organization",
+      "bio": "Race announcements for the Tatuus World Series.",
+      "avatar": "",
+      "posts": null,
+      "followers": null,
+      "following": null,
+      "latest": { "url": "https://www.instagram.com/amkracingorganization/", "image": "", "caption": "", "date": "" }
+    },
+    {
+      "key": "team",
+      "handle": "teamamkro",
+      "name": "Team AMKRO",
+      "bio": "Race entries and results.",
+      "avatar": "",
+      "posts": null,
+      "followers": null,
+      "following": null,
+      "latest": { "url": "https://www.instagram.com/teamamkro/", "image": "", "caption": "", "date": "" }
+    }
+  ]
+}

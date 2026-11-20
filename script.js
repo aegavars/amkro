@@ -130,42 +130,135 @@ function tick(){
   const s = Math.floor(diff/1e3);
   const txt = `${pad(d)} days : ${pad(h)} hrs : ${pad(mi)} min : ${pad(s)} sec`;
   $('#countdown').textContent = txt;
-  $('#eventCd').textContent = now>end ? 'Race finished' : txt;
-  $('#eventCdLabel').textContent = live ? 'Racing right now, ends in' : (now>end ? 'Result' : 'Starts in');
+  tickEvents();
 }
 
-/* ====== events (events.json, copied from the Paddock event page) ====== */
-function renderEvent(){
-  if(!EVENT) return;
-  const dt = new Date(EVENT.start);
-  $('#eventName').textContent = EVENT.name;
-  $('#eventDate').textContent = dt.toLocaleString(undefined,{dateStyle:'full',timeStyle:'short'});
-  $('#eventDesc').textContent = EVENT.description || '';
-  $('#eventLink').href = EVENT.url;
-  $('#eventThumb').href = EVENT.url;
-  if(EVENT.thumbnail) $('#eventThumb').style.backgroundImage = `url("${EVENT.thumbnail}")`;
-  const past = Date.now() > dt.getTime() + (EVENT.durationHours||CONFIG.raceDurationHours)*3600e3;
-  $('#eventTag').textContent = past ? 'Most recent race' : 'Next race';
+/* ====== events (data/events.json, written by scripts/update_events.py) ====== */
+let LIST = [];
+const evDur = e => (e.durationHours||CONFIG.raceDurationHours)*3600e3;
+function fmtCd(ms){
+  const d=Math.floor(ms/864e5); ms-=d*864e5;
+  const h=Math.floor(ms/36e5); ms-=h*36e5;
+  const m=Math.floor(ms/6e4); ms-=m*6e4;
+  return `${pad(d)} days : ${pad(h)} hrs : ${pad(m)} min : ${pad(Math.floor(ms/1e3))} sec`;
+}
+function tickEvents(){
+  const now=Date.now();
+  document.querySelectorAll('.event').forEach((card,i)=>{
+    const e=LIST[i]; if(!e) return;
+    const start=new Date(e.start).getTime(), end=start+evDur(e);
+    const label=card.querySelector('.ev-label'), cd=card.querySelector('.ev-cd');
+    if(now>end){label.textContent='Result'; cd.textContent='Race finished';}
+    else if(now>=start){label.textContent='Racing right now, ends in'; cd.textContent=fmtCd(end-now);}
+    else {label.textContent='Starts in'; cd.textContent=fmtCd(start-now);}
+  });
+}
+function renderEvents(){
+  const box=$('#eventList'); box.textContent='';
+  LIST.forEach((e,i)=>{
+    const past=Date.now()>new Date(e.start).getTime()+evDur(e);
+    const art=el('article','event');
+    const thumb=el('a','event-thumb'); thumb.href=e.url; thumb.target='_blank'; thumb.rel='noopener'; thumb.setAttribute('aria-label','Open race page');
+    if(e.thumbnail) thumb.style.backgroundImage=`url("${e.thumbnail}")`;
+    const body=el('div','event-body');
+    body.append(el('span','tag'+(i?' off':''), past?'Most recent race':(i===0?'Next race':'Upcoming')));
+    body.append(el('h3',null,e.name));
+    body.append(el('p','muted',new Date(e.start).toLocaleString(undefined,{dateStyle:'full',timeStyle:'short'})));
+    if(e.description) body.append(el('p','muted',e.description));
+    const c=el('div','countdown'); c.append(el('span','label ev-label'), el('span','ev-cd'));
+    const cta=el('div','cta'); const go=el('a','btn primary','Go to the race →'); go.href=e.url; go.target='_blank'; go.rel='noopener'; cta.append(go);
+    body.append(c,cta);
+    art.append(thumb,body); box.append(art);
+  });
 }
 async function loadEvents(){
   try{
-    const r = await fetch('events.json',{cache:'no-store'});
-    const data = await r.json();
-    const list = (data.events||[]).slice().sort((a,b)=>new Date(a.start)-new Date(b.start));
+    const data = await (await fetch('data/events.json',{cache:'no-store'})).json();
+    const all = (data.events||[]).slice().sort((a,b)=>new Date(a.start)-new Date(b.start));
     const now = Date.now();
-    EVENT = list.find(e=>new Date(e.start).getTime()+(e.durationHours||CONFIG.raceDurationHours)*3600e3>=now) || list[list.length-1] || null;
-    renderEvent(); tick();
-    const posts = data.instagramPosts||[];
-    posts.forEach(p=>{
-      const a=document.createElement('a'); a.href=p.url; a.target='_blank'; a.rel='noopener';
-      const img=document.createElement('img'); img.src=p.image; img.alt=p.caption||'Instagram post'; img.loading='lazy';
-      a.append(img); $('#igPosts').append(a);
-    });
+    const upcoming = all.filter(e=>new Date(e.start).getTime()+evDur(e)>=now).slice(0,3);
+    LIST = upcoming.length ? upcoming : all.slice(-1);   // nothing upcoming: show the most recent one
+    EVENT = LIST[0] || null;
+    if(!LIST.length){$('#eventList').textContent='No races scheduled yet. Check the Paddock.'; return;}
+    renderEvents(); tick();
   }catch(e){
-    $('#eventName').textContent='Open the Paddock for the latest race';
+    $('#eventList').textContent='Open the Paddock for the latest races.';
   }
 }
 loadEvents();
+
+/* ====== Instagram (data/instagram.json, dark cards: profile header + latest post) ====== */
+const fmtNum = n => (n===null||n===undefined||n==='') ? '–' : Number(n).toLocaleString('en');
+function el(tag, cls, text){const e=document.createElement(tag); if(cls)e.className=cls; if(text!==undefined)e.textContent=text; return e;}
+async function loadInstagram(){
+  const grid=$('#igGrid');
+  try{
+    const data=await (await fetch('data/instagram.json',{cache:'no-store'})).json();
+    grid.textContent='';
+    (data.accounts||[]).forEach(acc=>{
+      const profileUrl='https://www.instagram.com/'+acc.handle+'/';
+      const col=el('div','ig-col');
+
+      // profile header
+      const head=el('div','ig-card ig-profile');
+      const av=el('div','ig-avatar');
+      if(acc.avatar){const i=el('img');i.src=acc.avatar;i.alt='';av.append(i);} else av.textContent=(acc.name||acc.handle).charAt(0);
+      const info=el('div','ig-info');
+      const h=el('a','ig-handle','@'+acc.handle); h.href=profileUrl; h.target='_blank'; h.rel='noopener';
+      const nm=el('div','ig-name',acc.name||'');
+      const stats=el('div','ig-stats');
+      [['posts',acc.posts],['followers',acc.followers],['following',acc.following]].forEach(([l,v])=>{
+        const s=el('span'); const b=el('b',null,fmtNum(v)); s.append(b,document.createTextNode(' '+l)); stats.append(s);
+      });
+      info.append(h,nm,stats);
+      if(acc.bio) info.append(el('p','ig-bio',acc.bio));
+      const follow=el('a','btn ig-btn','Follow'); follow.href=profileUrl; follow.target='_blank'; follow.rel='noopener';
+      head.append(av,info,follow);
+
+      // latest post
+      const post=el('a','ig-card ig-post');
+      const L=acc.latest||{};
+      post.href=L.url||profileUrl; post.target='_blank'; post.rel='noopener';
+      const cap=el('div','ig-label', acc.key==='organizer' ? 'Latest announcement' : 'Latest post');
+      post.append(cap);
+      if(L.image){const i=el('img');i.src=L.image;i.alt=L.caption||'Latest Instagram post';i.loading='lazy';post.append(i);}
+      else post.append(el('div','ig-empty','Open on Instagram'));
+      if(L.caption) post.append(el('p','ig-caption',L.caption));
+      if(L.date) post.append(el('small','ig-date',L.date));
+
+      col.append(head,post); grid.append(col);
+    });
+  }catch(e){
+    grid.textContent='';
+    [['teamamkro','Team AMKRO'],['amkracingorganization','AMK Racing Organization']].forEach(([h,n])=>{
+      const a=el('a','btn','@'+h+' on Instagram'); a.href='https://www.instagram.com/'+h+'/'; a.target='_blank'; a.rel='noopener'; grid.append(a);
+    });
+  }
+}
+loadInstagram();
+
+/* ====== YouTube (data/youtube.json: latest 3 regular videos, no Shorts) ====== */
+async function loadYouTube(){
+  try{
+    const data=await (await fetch('data/youtube.json',{cache:'no-store'})).json();
+    const vids=(data.videos||[]).slice(0,3);
+    if(!vids.length) return; // keep the fallback playlist embed from index.html
+    const grid=$('#ytGrid'); grid.textContent='';
+    vids.forEach(v=>{
+      if(!/^[\w-]{11}$/.test(v.id||'')) return;
+      const item=el('div','yt-item');
+      const wrap=el('div','yt');
+      const f=el('iframe'); f.title=v.title||'YouTube video'; f.loading='lazy'; f.allowFullscreen=true;
+      f.src='https://www.youtube-nocookie.com/embed/'+v.id;
+      wrap.append(f);
+      const t=el('a','yt-title',v.title||''); t.href='https://www.youtube.com/watch?v='+v.id; t.target='_blank'; t.rel='noopener';
+      item.append(wrap,t);
+      if(v.published) item.append(el('small','muted',new Date(v.published).toLocaleDateString(undefined,{dateStyle:'medium'})));
+      grid.append(item);
+    });
+  }catch(e){/* keep fallback embed */}
+}
+loadYouTube();
 setInterval(tick,1000); tick();
 
 /* ====== team radio feed ====== */
@@ -317,3 +410,55 @@ document.querySelectorAll('#nav a').forEach(a=>a.addEventListener('click',()=>$(
 const toTop=$('#toTop');
 addEventListener('scroll',()=>toTop.classList.toggle('show',scrollY>600),{passive:true});
 toTop.onclick=()=>scrollTo({top:0});
+
+
+/* ====== Series standings (data/standings.json, written by scripts/update_standings.py) ====== */
+let ST = [], stStatus = 'all', stQuery = '';
+function renderStandings(){
+  const box = $('#stList'); box.textContent = '';
+  const list = ST.filter(e => (stStatus==='all' || e.status===stStatus) &&
+                              (e.name+' '+(e.series||'')).toLowerCase().includes(stQuery));
+  if(!list.length){ box.textContent = ST.length ? 'No series match your search.' : 'No events loaded yet.'; return; }
+  list.forEach(e=>{
+    const d = el('details','st');
+    const sum = el('summary');
+    const th = el('div','st-thumb'); if(e.thumbnail) th.style.backgroundImage = `url("${e.thumbnail}")`;
+    const nm = el('div','st-name', e.name); if(e.date) nm.append(el('small',null,e.date));
+    const tag = el('span','tag'+(e.status==='finished'?' off':''), e.status==='finished'?'Finished':'Current');
+    sum.append(th,nm,tag);
+    const body = el('div','st-body');
+    const links = el('div','cta');
+    const a = el('a','btn primary','Results & standings →'); a.href=e.standingsUrl||e.url; a.target='_blank'; a.rel='noopener';
+    const b = el('a','btn','Event page'); b.href=e.url; b.target='_blank'; b.rel='noopener';
+    links.append(a,b); body.append(links);
+    (e.tables||[]).forEach(t=>{
+      if(t.title) body.append(el('h4',null,t.title));
+      const wrap = el('div','st-scroll'); const tb = el('table');
+      t.rows.forEach((r,i)=>{
+        const tr = el('tr');
+        r.forEach(c=>tr.append(el(i===0?'th':'td',null,c)));
+        tb.append(tr);
+      });
+      wrap.append(tb); body.append(wrap);
+    });
+    if(!(e.tables||[]).length) body.append(e.text ? el('pre',null,e.text) : el('p','muted','Standings are not available yet. Use the button above.'));
+    d.append(sum,body); box.append(d);
+  });
+}
+function renderStChips(){
+  const c = $('#stChips'); c.textContent = '';
+  [['all','All'],['current','Current'],['finished','Finished']].forEach(([k,l])=>{
+    const b = el('button','chip'+(stStatus===k?' on':''),l);
+    b.onclick = ()=>{stStatus=k; renderStChips(); renderStandings();}; c.append(b);
+  });
+}
+$('#stSearch').addEventListener('input', e=>{stQuery = e.target.value.trim().toLowerCase(); renderStandings();});
+async function loadStandings(){
+  try{
+    const data = await (await fetch('data/standings.json',{cache:'no-store'})).json();
+    ST = data.events || [];
+    if(data.updated) $('#stUpdated').textContent = 'Updated ' + new Date(data.updated).toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'}) + '.';
+  }catch(e){ ST = []; }
+  renderStChips(); renderStandings();
+}
+loadStandings();
