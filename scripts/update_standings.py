@@ -1,62 +1,92 @@
 #!/usr/bin/env python3
-"""Fetch all finished events and Top 3 podium standings for AMKRO on World Sim Series."""
+"""Log into World Sim Series, render AMKRO finished events, and extract thumbnails + Top 3 podiums."""
 
 from __future__ import annotations
 
 import json
+import os
 import re
-import urllib.error
-import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from playwright.sync_api import sync_playwright
 
 ORG_ID = "2b746de0d67e2930b18aacfa19e07eeb"
-ORG_URL = f"https://paddock.worldsimseries.com/organizations/{ORG_ID}"
+LOGIN_URL = "https://paddock.worldsimseries.com/login"
+ORG_FINISHED_URL = f"https://paddock.worldsimseries.com/organizations/{ORG_ID}#/finished-events"
 OUT_PATH = Path(__file__).resolve().parent.parent / "data" / "standings.json"
 
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
-    "Accept": "application/json, text/plain, */*",
-    "Referer": ORG_URL,
-    "Origin": "https://paddock.worldsimseries.com",
-}
 
+def login_wss(page) -> bool:
+    email = os.environ.get("WSS_EMAIL", "").strip()
+    password = os.environ.get("WSS_PASSWORD", "").strip()
+    if not email or not password:
+        print("WSS_EMAIL or WSS_PASSWORD not set; continuing without login.")
+        return False
 
-def fetch_json(url: str) -> Any | None:
-    req = urllib.request.Request(url, headers=HEADERS)
+    print("Logging into World Sim Series...")
+    page.goto(LOGIN_URL, wait_until="networkidle", timeout=45000)
+    page.wait_for_timeout(1500)
+
+    # If redirected to a sign-in button first, click it
     try:
-        with urllib.request.urlopen(req, timeout=25) as resp:
-            raw = resp.read().decode("utf-8", errors="replace")
-            return json.loads(raw)
+        sign_in_btn = page.locator('button:has-text("Sign in"), a:has-text("Sign in"), button:has-text("Log in"), a:has-text("Log in")').first
+        if sign_in_btn.is_visible(timeout=2000) and not page.locator('input[type="password"]').is_visible(timeout=1000):
+            sign_in_btn.click()
+            page.wait_for_timeout(1500)
     except Exception:
-        return None
+        pass
 
+    email_input = page.locator('input[type="email"], input[name*="email" i], input[formcontrolname*="email" i], input[placeholder*="email" i]').first
+    pass_input = page.locator('input[type="password"]').first
 
-def fetch_text(url: str) -> str:
-    req = urllib.request.Request(url, headers=HEADERS)
+    email_input.wait_for(state="visible", timeout=20000)
+    email_input.fill(email)
+    pass_input.fill(password)
+
+    submit_btn = page.locator('button[type="submit"], button:has-text("Sign in"), button:has-text("Log in"), button:has-text("Login")').first
+    submit_btn.click()
+
+    # Wait until redirected away from /login
     try:
-        with urllib.request.urlopen(req, timeout=25) as resp:
-            return resp.read().decode("utf-8", errors="replace")
+        page.wait_for_url(lambda u: "/login" not in u.lower(), timeout=25000)
     except Exception:
-        return ""
+        page.wait_for_timeout(4000)
+
+    page.wait_for_load_state("networkidle", timeout=25000)
+    print("Login complete. Current URL:", page.url)
+    return True
 
 
-def country_to_flag(code: str | None) -> str:
-    if not code:
+def country_to_flag(code_or_name: str | None) -> str:
+    if not code_or_name:
         return ""
-    clean = re.sub(r"[^A-Za-z]", "", str(code)).upper()
-    if len(clean) == 3:
-        alpha3_to_2 = {
-            "LVA": "LV", "LTU": "LT", "EST": "EE", "DEU": "DE", "GER": "DE",
-            "GBR": "GB", "ENG": "GB", "USA": "US", "FRA": "FR", "ITA": "IT",
-            "ESP": "ES", "NLD": "NL", "BEL": "BE", "POL": "PL", "FIN": "FI",
-            "SWE": "SE", "NOR": "NO", "DNK": "DK", "AUT": "AT", "CHE": "CH",
-            "CZE": "CZ", "SVK": "SK", "HUN": "HU", "ROU": "RO", "BGR": "BG",
-            "UKR": "UA", "PRT": "PT", "IRL": "IE", "AUS": "AU", "NZL": "NZ",
-            "CAN": "CA", "BRA": "BR", "ARG": "AR", "JPN": "JP", "KOR": "KR",
-        }
-        clean = alpha3_to_2.get(clean, clean[:2])
+    raw = str(code_or_name).strip()
+    if len(raw) >= 2 and all(0x1F1E6 <= ord(ch) <= 0x1F1FF for ch in raw[:2]):
+        return raw[:2]
+
+    clean = re.sub(r"[^A-Za-z]", "", raw).upper()
+    name_map = {
+        "LATVIA": "LV", "LITHUANIA": "LT", "ESTONIA": "EE", "GERMANY": "DE",
+        "UNITEDKINGDOM": "GB", "GREATBRITAIN": "GB", "ENGLAND": "GB",
+        "UNITEDSTATES": "US", "FRANCE": "FR", "ITALY": "IT", "SPAIN": "ES",
+        "NETHERLANDS": "NL", "BELGIUM": "BE", "POLAND": "PL", "FINLAND": "FI",
+        "SWEDEN": "SE", "NORWAY": "NO", "DENMARK": "DK", "AUSTRIA": "AT",
+        "SWITZERLAND": "CH", "CZECHIA": "CZ", "CZECHREPUBLIC": "CZ",
+        "SLOVAKIA": "SK", "HUNGARY": "HU", "ROMANIA": "RO", "BULGARIA": "BG",
+        "UKRAINE": "UA", "PORTUGAL": "PT", "IRELAND": "IE", "AUSTRALIA": "AU",
+        "NEWZEALAND": "NZ", "CANADA": "CA", "BRAZIL": "BR", "ARGENTINA": "AR",
+        "JAPAN": "JP", "SOUTHKOREA": "KR",
+        "LVA": "LV", "LTU": "LT", "EST": "EE", "DEU": "DE", "GER": "DE",
+        "GBR": "GB", "ENG": "GB", "USA": "US", "FRA": "FR", "ITA": "IT",
+        "ESP": "ES", "NLD": "NL", "BEL": "BE", "POL": "PL", "FIN": "FI",
+        "SWE": "SE", "NOR": "NO", "DNK": "DK", "AUT": "AT", "CHE": "CH",
+        "CZE": "CZ", "SVK": "SK", "HUN": "HU", "ROU": "RO", "BGR": "BG",
+        "UKR": "UA", "PRT": "PT", "IRL": "IE", "AUS": "AU", "NZL": "NZ",
+        "CAN": "CA", "BRA": "BR", "ARG": "AR", "JPN": "JP", "KOR": "KR",
+    }
+    if clean in name_map:
+        clean = name_map[clean]
     if len(clean) != 2:
         return ""
     return chr(0x1F1E6 + ord(clean[0]) - ord("A")) + chr(0x1F1E6 + ord(clean[1]) - ord("A"))
@@ -69,226 +99,217 @@ def format_short_name(raw_name: str) -> str:
     parts = name.split(" ")
     if len(parts) == 1:
         return parts[0]
-    first_initial = parts[0][0].upper()
-    surname = " ".join(parts[1:])
-    return f"{first_initial}. {surname}"
+    return f"{parts[0][0].upper()}. {' '.join(parts[1:])}"
 
 
-def extract_events_list(payload: Any) -> list[dict[str, Any]]:
-    if isinstance(payload, list):
-        return [x for x in payload if isinstance(x, dict)]
+def find_driver_rows(payload: Any) -> list[dict[str, Any]]:
+    if isinstance(payload, list) and payload and isinstance(payload[0], dict):
+        sample = payload[0]
+        if any(k in sample for k in ("driver", "driverName", "fullName", "points", "position", "user")):
+            return payload
     if isinstance(payload, dict):
-        for key in ("events", "items", "data", "results", "finishedEvents", "finished"):
-            val = payload.get(key)
-            if isinstance(val, list):
-                return [x for x in val if isinstance(x, dict)]
+        for v in payload.values():
+            found = find_driver_rows(v)
+            if found:
+                return found
     return []
 
 
-def fetch_org_finished_events() -> list[dict[str, Any]]:
-    candidate_urls = [
-        f"https://paddock.worldsimseries.com/api/organizations/{ORG_ID}/events?status=finished&limit=100",
-        f"https://paddock.worldsimseries.com/api/organizations/{ORG_ID}/finished-events?limit=100",
-        f"https://paddock.worldsimseries.com/api/organizations/{ORG_ID}/events?limit=100",
-        f"https://paddock.worldsimseries.com/api/v1/organizations/{ORG_ID}/events?status=finished",
-        f"https://api.worldsimseries.com/organizations/{ORG_ID}/events?status=finished",
-    ]
-    for url in candidate_urls:
-        data = fetch_json(url)
-        items = extract_events_list(data)
-        if items:
-            return items
+def extract_top3_from_page(page, event_id: str) -> list[dict[str, Any]]:
+    standings_url = f"https://paddock.worldsimseries.com/events/{event_id}/standings#/"
+    captured_json: list[Any] = []
 
-    # Fallback: parse embedded JSON state from the organization page HTML
-    html = fetch_text(ORG_URL)
-    for m in re.finditer(r"<script[^>]*>(\{.*?\})</script>", html, flags=re.S):
+    def on_response(resp):
         try:
-            blob = json.loads(m.group(1))
-            items = extract_events_list(blob)
-            if items:
-                return items
+            url = resp.url.lower()
+            if resp.status == 200 and any(k in url for k in ("standing", "result", "classification", "leaderboard", "driver")):
+                ct = resp.headers.get("content-type", "")
+                if "json" in ct:
+                    captured_json.append(resp.json())
         except Exception:
-            continue
-    return []
+            pass
 
+    page.on("response", on_response)
+    try:
+        page.goto(standings_url, wait_until="networkidle", timeout=35000)
+        page.wait_for_timeout(2500)
+    except Exception:
+        pass
+    finally:
+        page.remove_listener("response", on_response)
 
-def extract_rows_from_standings(payload: Any) -> list[dict[str, Any]]:
-    if isinstance(payload, list):
-        return [x for x in payload if isinstance(x, dict)]
-    if isinstance(payload, dict):
-        for key in ("standings", "drivers", "entries", "rows", "results", "classification", "items", "data"):
-            val = payload.get(key)
-            if isinstance(val, list) and val and isinstance(val[0], dict):
-                return val
-            if isinstance(val, dict):
-                nested = extract_rows_from_standings(val)
-                if nested:
-                    return nested
-    return []
-
-
-def fetch_event_top3(event_id: str | int) -> list[dict[str, Any]]:
-    eid = str(event_id)
-    candidate_urls = [
-        f"https://paddock.worldsimseries.com/api/events/{eid}/standings",
-        f"https://paddock.worldsimseries.com/api/events/{eid}/results",
-        f"https://paddock.worldsimseries.com/api/v1/events/{eid}/standings",
-        f"https://api.worldsimseries.com/events/{eid}/standings",
-    ]
-    rows: list[dict[str, Any]] = []
-    for url in candidate_urls:
-        data = fetch_json(url)
-        rows = extract_rows_from_standings(data)
+    for blob in captured_json:
+        rows = find_driver_rows(blob)
         if rows:
-            break
+            top3 = []
+            for idx, r in enumerate(rows[:3], start=1):
+                driver = r.get("driver") if isinstance(r.get("driver"), dict) else {}
+                user = r.get("user") if isinstance(r.get("user"), dict) else {}
+                raw_name = (
+                    r.get("driverName") or r.get("fullName") or r.get("name")
+                    or driver.get("fullName") or driver.get("name")
+                    or f"{driver.get('firstName', '')} {driver.get('lastName', '')}".strip()
+                    or f"{user.get('firstName', '')} {user.get('lastName', '')}".strip()
+                    or user.get("name") or ""
+                )
+                cc = (
+                    r.get("countryCode") or r.get("country") or r.get("nationality")
+                    or driver.get("countryCode") or driver.get("country")
+                    or user.get("countryCode") or user.get("country") or ""
+                )
+                pts = r.get("points") if r.get("points") is not None else r.get("score")
+                if raw_name:
+                    top3.append({
+                        "position": idx,
+                        "name": format_short_name(raw_name),
+                        "fullName": raw_name.strip(),
+                        "countryCode": str(cc).upper(),
+                        "flag": country_to_flag(cc),
+                        "points": pts,
+                    })
+            if top3:
+                return top3
 
-    top3: list[dict[str, Any]] = []
-    for idx, row in enumerate(rows[:3], start=1):
-        driver = row.get("driver") if isinstance(row.get("driver"), dict) else {}
-        user = row.get("user") if isinstance(row.get("user"), dict) else {}
-
-        raw_name = (
-            row.get("driverName")
-            or row.get("fullName")
-            or row.get("name")
-            or driver.get("fullName")
-            or driver.get("name")
-            or (f"{driver.get('firstName', '')} {driver.get('lastName', '')}".strip())
-            or (f"{user.get('firstName', '')} {user.get('lastName', '')}".strip())
-            or user.get("name")
-            or ""
-        )
-        country_code = (
-            row.get("countryCode")
-            or row.get("country")
-            or row.get("nationality")
-            or driver.get("countryCode")
-            or driver.get("country")
-            or user.get("countryCode")
-            or user.get("country")
-            or ""
-        )
-        points = row.get("points") if row.get("points") is not None else row.get("score")
-        pos = row.get("position") or row.get("pos") or row.get("rank") or idx
-
-        top3.append(
-            {
-                "position": int(pos) if str(pos).isdigit() else idx,
-                "name": format_short_name(raw_name),
-                "fullName": str(raw_name).strip(),
-                "countryCode": str(country_code).upper(),
-                "flag": country_to_flag(country_code),
-                "points": points,
+    dom_rows = page.evaluate(
+        """() => {
+            const out = [];
+            const rowEls = Array.from(document.querySelectorAll('table tbody tr, [class*="standing"] [class*="row"], [class*="table"] [class*="row"]'));
+            for (const row of rowEls) {
+                if (out.length >= 3) break;
+                const text = (row.innerText || '').trim();
+                if (!text) continue;
+                const flagImg = row.querySelector('img[src*="flag"], img[alt*="flag"], [class*="flag"]');
+                let country = '';
+                if (flagImg) {
+                    country = flagImg.getAttribute('alt') || flagImg.getAttribute('title') || flagImg.getAttribute('src') || '';
+                    const m = /\\/([a-zA-Z]{2})\\.(svg|png|webp)/i.exec(country);
+                    if (m) country = m[1];
+                }
+                const links = Array.from(row.querySelectorAll('a')).map(a => a.innerText.trim()).filter(Boolean);
+                const cells = Array.from(row.querySelectorAll('td, [class*="cell"], [class*="col"]')).map(c => c.innerText.trim()).filter(Boolean);
+                out.push({ text, country, links, cells });
             }
-        )
+            return out;
+        }"""
+    )
+
+    top3 = []
+    for idx, r in enumerate(dom_rows[:3], start=1):
+        raw_name = ""
+        for candidate in (r.get("links") or []) + (r.get("cells") or []):
+            cleaned = re.sub(r"^\d+\.?\s*", "", candidate).strip()
+            if len(cleaned) >= 3 and re.search(r"[A-Za-z]{2,}", cleaned) and not cleaned.isdigit():
+                raw_name = cleaned
+                break
+        if not raw_name:
+            lines = [ln.strip() for ln in r.get("text", "").splitlines() if ln.strip()]
+            for ln in lines:
+                if len(ln) >= 3 and re.search(r"[A-Za-z]{2,}", ln) and not ln.isdigit():
+                    raw_name = ln
+                    break
+        if raw_name:
+            top3.append({
+                "position": idx,
+                "name": format_short_name(raw_name),
+                "fullName": raw_name,
+                "countryCode": str(r.get("country") or "").upper(),
+                "flag": country_to_flag(r.get("country")),
+                "points": None,
+            })
     return top3
 
 
-def is_finished_event(ev: dict[str, Any]) -> bool:
-    status = str(ev.get("status") or ev.get("state") or "").lower()
-    if status in {"finished", "completed", "ended", "past", "archived"}:
-        return True
-    end_str = ev.get("endDate") or ev.get("endsAt") or ev.get("end") or ev.get("startDate") or ev.get("startsAt")
-    if end_str:
-        try:
-            dt = datetime.fromisoformat(str(end_str).replace("Z", "+00:00"))
-            return dt < datetime.now(timezone.utc)
-        except Exception:
-            pass
-    return True
-
-
-def normalize_event(ev: dict[str, Any]) -> dict[str, Any] | None:
-    eid = ev.get("id") or ev.get("eventId") or ev.get("slug")
-    if not eid:
-        return None
-    eid_str = str(eid)
-    name = str(ev.get("name") or ev.get("title") or f"Event {eid_str}").strip()
-    series = str(
-        (ev.get("series") or {}).get("name")
-        if isinstance(ev.get("series"), dict)
-        else (ev.get("seriesName") or ev.get("series") or "")
-    ).strip()
-
-    thumb = (
-        ev.get("bannerUrl")
-        or ev.get("banner")
-        or ev.get("thumbnailUrl")
-        or ev.get("thumbnail")
-        or ev.get("imageUrl")
-        or ev.get("image")
-        or ""
-    )
-    if thumb and str(thumb).startswith("/"):
-        thumb = "https://paddock.worldsimseries.com" + str(thumb)
-
-    raw_date = ev.get("endDate") or ev.get("startDate") or ev.get("startsAt") or ev.get("date") or ""
-    date_label = ""
-    sort_ts = ""
-    if raw_date:
-        sort_ts = str(raw_date)
-        try:
-            dt = datetime.fromisoformat(str(raw_date).replace("Z", "+00:00"))
-            date_label = dt.strftime("%d %b %Y")
-        except Exception:
-            date_label = str(raw_date)[:10]
-
-    top3 = fetch_event_top3(eid_str)
-
-    return {
-        "id": eid_str,
-        "name": name,
-        "series": series,
-        "status": "finished",
-        "date": date_label,
-        "sortDate": sort_ts,
-        "thumbnail": str(thumb),
-        "url": f"https://paddock.worldsimseries.com/events/{eid_str}#/",
-        "standingsUrl": f"https://paddock.worldsimseries.com/events/{eid_str}/standings#/",
-        "top3": top3,
-    }
-
-
 def main() -> None:
-    raw_events = fetch_org_finished_events()
-    existing: list[dict[str, Any]] = []
-    if OUT_PATH.exists():
-        try:
-            old = json.loads(OUT_PATH.read_text(encoding="utf-8"))
-            existing = old.get("events") or []
-        except Exception:
-            existing = []
+    events: list[dict[str, Any]] = []
 
-    normalized: list[dict[str, Any]] = []
-    for ev in raw_events:
-        if not is_finished_event(ev):
-            continue
-        item = normalize_event(ev)
-        if item:
-            normalized.append(item)
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        context = browser.new_context(viewport={"width": 1440, "height": 900})
+        page = context.new_page()
 
-    if normalized:
-        normalized.sort(key=lambda x: x.get("sortDate", ""), reverse=True)
-        events_out = normalized
-    else:
-        # Preserve existing events and refresh their Top 3 if API returned empty
-        events_out = existing
-        for item in events_out:
-            item["status"] = "finished"
-            if item.get("id"):
-                fresh_top3 = fetch_event_top3(item["id"])
-                if fresh_top3:
-                    item["top3"] = fresh_top3
-                item["standingsUrl"] = f"https://paddock.worldsimseries.com/events/{item['id']}/standings#/"
+        login_wss(page)
+
+        page.goto(ORG_FINISHED_URL, wait_until="networkidle", timeout=45000)
+        page.wait_for_timeout(3000)
+
+        for _ in range(5):
+            page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+            page.wait_for_timeout(800)
+
+        raw_cards = page.evaluate(
+            """() => {
+                const seen = new Set();
+                const results = [];
+                const anchors = Array.from(document.querySelectorAll('a[href*="/events/"]'));
+                for (const a of anchors) {
+                    const href = a.getAttribute('href') || '';
+                    const m = /\\/events\\/(\\d+)/.exec(href);
+                    if (!m) continue;
+                    const id = m[1];
+                    if (seen.has(id)) continue;
+                    seen.add(id);
+
+                    const card = a.closest('article, [class*="card"], [class*="event"], [class*="item"]') || a;
+                    const titleEl = card.querySelector('h1, h2, h3, h4, [class*="title"], [class*="name"]');
+                    const name = (titleEl ? titleEl.innerText : a.innerText || '').trim().split('\\n')[0].trim();
+
+                    let thumb = '';
+                    const img = card.querySelector('img');
+                    if (img && img.src) {
+                        thumb = img.src;
+                    } else {
+                        const bgEl = [card, ...Array.from(card.querySelectorAll('*'))].find(el => {
+                            const bg = getComputedStyle(el).backgroundImage;
+                            return bg && bg !== 'none' && bg.includes('url(');
+                        });
+                        if (bgEl) {
+                            const bg = getComputedStyle(bgEl).backgroundImage;
+                            const um = /url\\(["']?(.*?)["']?\\)/.exec(bg);
+                            if (um) thumb = um[1];
+                        }
+                    }
+
+                    const dateEl = card.querySelector('time, [class*="date"]');
+                    const dateText = dateEl ? dateEl.innerText.trim() : '';
+
+                    results.push({
+                        id,
+                        name: name || ('Event ' + id),
+                        thumbnail: thumb,
+                        date: dateText
+                    });
+                }
+                return results;
+            }"""
+        )
+
+        print(f"Found {len(raw_cards)} finished events on organization page.")
+
+        for card in raw_cards:
+            eid = card["id"]
+            top3 = extract_top3_from_page(page, eid)
+            events.append({
+                "id": eid,
+                "name": card["name"],
+                "series": "AMKRO",
+                "status": "finished",
+                "date": card["date"],
+                "thumbnail": card["thumbnail"],
+                "url": f"https://paddock.worldsimseries.com/events/{eid}#/",
+                "standingsUrl": f"https://paddock.worldsimseries.com/events/{eid}/standings#/",
+                "top3": top3,
+            })
+
+        browser.close()
 
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     payload = {
         "updated": datetime.now(timezone.utc).isoformat(),
-        "organizationUrl": f"{ORG_URL}#/finished-events",
-        "events": events_out,
+        "organizationUrl": ORG_FINISHED_URL,
+        "events": events,
     }
     OUT_PATH.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    print(f"Saved {len(events_out)} finished events to {OUT_PATH}")
+    print(f"Saved {len(events)} finished events to {OUT_PATH}")
 
 
 if __name__ == "__main__":
