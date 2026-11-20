@@ -20,7 +20,15 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Install Playwright and Chromium
+        run: |
+          pip install playwright
+          playwright install chromium --with-deps
+
       - name: Fetch finished events and Top 3 podiums
+        env:
+          WSS_EMAIL: ${{ secrets.WSS_EMAIL }}
+          WSS_PASSWORD: ${{ secrets.WSS_PASSWORD }}
         run: python scripts/update_standings.py
 
       - name: Commit updated standings.json
