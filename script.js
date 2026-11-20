@@ -1,5 +1,5 @@
 'use strict';
-/* ====== EDIT ME: team content ====== */
+
 const CONFIG = {
   nextRace: nextThursdayAt(20, 0),
   raceDurationHours: 3,
@@ -98,7 +98,12 @@ function fmtLap(t){
   const m = Math.floor(t/60), s = (t-m*60).toFixed(3);
   return m+':'+(s.length<6?'0':'')+s;
 }
-function el(tag, cls, text){const e=document.createElement(tag); if(cls)e.className=cls; if(text!==undefined)e.textContent=text; return e;}
+function el(tag, cls, text){
+  const e=document.createElement(tag);
+  if(cls) e.className=cls;
+  if(text!==undefined) e.textContent=text;
+  return e;
+}
 
 /* ====== live pill & event countdowns ====== */
 let EVENT = null;
@@ -131,6 +136,7 @@ function tickEvents(){
     const e=LIST[i]; if(!e) return;
     const start=new Date(e.start).getTime(), end=start+evDur(e);
     const label=card.querySelector('.ev-label'), cd=card.querySelector('.ev-cd');
+    if(!label || !cd) return;
     if(now>end){label.textContent='Result'; cd.textContent='Race finished';}
     else if(now>=start){label.textContent='Racing right now, ends in'; cd.textContent=fmtCd(end-now);}
     else {label.textContent='Starts in'; cd.textContent=fmtCd(start-now);}
@@ -138,7 +144,9 @@ function tickEvents(){
 }
 
 function renderEvents(){
-  const box=$('#eventList'); box.textContent='';
+  const box=$('#eventList');
+  if(!box) return;
+  box.textContent='';
   LIST.forEach((e,i)=>{
     const past=Date.now()>new Date(e.start).getTime()+evDur(e);
     const art=el('article','event');
@@ -157,25 +165,28 @@ function renderEvents(){
 }
 
 async function loadEvents(){
+  const box = $('#eventList');
   try{
-    const data = await (await fetch('data/events.json',{cache:'no-store'})).json();
+    const res = await fetch('data/events.json',{cache:'no-store'});
+    const data = await res.json();
     const all = (data.events||[]).slice().sort((a,b)=>new Date(a.start)-new Date(b.start));
     const now = Date.now();
     const upcoming = all.filter(e=>new Date(e.start).getTime()+evDur(e)>=now);
     LIST = upcoming.length ? upcoming : all.slice(-1);
     EVENT = LIST[0] || null;
-    if(!LIST.length){$('#eventList').textContent='No races scheduled yet. Check the Paddock.'; return;}
-    renderEvents(); tick();
+    if(!LIST.length){ if(box) box.textContent='No races scheduled yet. Check the Paddock.'; return; }
+    renderEvents();
+    tick();
   }catch(e){
-    $('#eventList').textContent='Open the Paddock for the latest races.';
+    if(box) box.textContent='Open the Paddock for the latest races.';
   }
 }
-loadEvents();
 
 /* ====== Instagram (data/instagram.json) ====== */
 const fmtNum = n => (n===null||n===undefined||n==='') ? '–' : Number(n).toLocaleString('en');
 async function loadInstagram(){
   const grid=$('#igGrid');
+  if(!grid) return;
   try{
     const data=await (await fetch('data/instagram.json',{cache:'no-store'})).json();
     grid.textContent='';
@@ -217,7 +228,6 @@ async function loadInstagram(){
     });
   }
 }
-loadInstagram();
 
 /* ====== YouTube (data/youtube.json) ====== */
 async function loadYouTube(){
@@ -225,7 +235,9 @@ async function loadYouTube(){
     const data=await (await fetch('data/youtube.json',{cache:'no-store'})).json();
     const vids=(data.videos||[]).slice(0,3);
     if(!vids.length) return;
-    const grid=$('#ytGrid'); grid.textContent='';
+    const grid=$('#ytGrid');
+    if(!grid) return;
+    grid.textContent='';
     vids.forEach(v=>{
       if(!/^[\w-]{11}$/.test(v.id||'')) return;
       const item=el('div','yt-item');
@@ -240,20 +252,18 @@ async function loadYouTube(){
     });
   }catch(e){}
 }
-loadYouTube();
-setInterval(tick,1000); tick();
 
 /* ====== racepedia ====== */
 let tier = 'All', q = '';
 function renderChips(){
-  const c = $('#chips'); c.textContent='';
+  const c = $('#chips'); if(!c) return; c.textContent='';
   TIERS.forEach(t=>{
     const b=document.createElement('button'); b.className='chip'+(t===tier?' on':''); b.textContent = t==='All'?'Depth: All':t;
     b.onclick=()=>{tier=t;renderChips();renderCards();}; c.append(b);
   });
 }
 function renderCards(){
-  const box = $('#cards'); box.textContent='';
+  const box = $('#cards'); if(!box) return; box.textContent='';
   ENTRIES.filter(([n,t,d])=>(tier==='All'||t===tier)&&(n+d).toLowerCase().includes(q)).forEach(([n,t,d])=>{
     const a=document.createElement('article'); a.className='card tier-'+t.toLowerCase();
     const h=document.createElement('h3'); h.textContent=n+' ';
@@ -263,22 +273,22 @@ function renderCards(){
   });
   if(!box.children.length) box.textContent='Nothing found. Yet.';
 }
-$('#search').addEventListener('input',e=>{q=e.target.value.trim().toLowerCase();renderCards();});
+if($('#search')) $('#search').addEventListener('input',e=>{q=e.target.value.trim().toLowerCase();renderCards();});
 renderChips(); renderCards();
 
 /* ====== tools ====== */
-$('#lapBtn').onclick=()=>{
+if($('#lapBtn')) $('#lapBtn').onclick=()=>{
   const a=parseLap($('#lapA').value), b=parseLap($('#lapB').value);
   $('#lapOut').textContent = (isNaN(a)||isNaN(b)) ? 'Use format 1:32.450' :
     `Gap: ${(a-b>=0?'+':'-')+Math.abs(a-b).toFixed(3)}s (${fmtLap(a)} vs ${fmtLap(b)})`;
 };
-$('#fuelBtn').onclick=()=>{
+if($('#fuelBtn')) $('#fuelBtn').onclick=()=>{
   const mins=+$('#fRace').value, lap=parseLap($('#fLap').value), use=+$('#fUse').value;
   if(!mins||!lap||!use){$('#fuelOut').textContent='Fill in all fields';return;}
   const laps=Math.ceil(mins*60/lap)+1;
   $('#fuelOut').textContent=`${laps} laps, ${(laps*use).toFixed(1)} L`;
 };
-$('#spinBtn').onclick=()=>{
+if($('#spinBtn')) $('#spinBtn').onclick=()=>{
   let n=0; const out=$('#spinOut');
   const iv=setInterval(()=>{out.textContent=TRACKS[Math.floor(Math.random()*TRACKS.length)];if(++n>14)clearInterval(iv);},80);
 };
@@ -294,10 +304,15 @@ function showQ(){
   opts.forEach((o,i)=>{const b=document.createElement('button');b.className='btn';b.textContent=o;
     b.onclick=()=>{if(i===right)score++;qi++;showQ();};box.append(b);});
 }
-$('#quizBtn').onclick=()=>{qi=0;score=0;showQ();};
+if($('#quizBtn')) $('#quizBtn').onclick=()=>{qi=0;score=0;showQ();};
 let clueI=0;
-function newClue(){clueI=Math.floor(Math.random()*CLUES.length);$('#clue').textContent=CLUES[clueI][0];$('#guess').value='';}
-$('#guessBtn').onclick=()=>{
+function newClue(){
+  if(!$('#clue')) return;
+  clueI=Math.floor(Math.random()*CLUES.length);
+  $('#clue').textContent=CLUES[clueI][0];
+  $('#guess').value='';
+}
+if($('#guessBtn')) $('#guessBtn').onclick=()=>{
   const g=$('#guess').value.trim().toLowerCase();
   if(!g)return;
   const ok=g===CLUES[clueI][1];
@@ -306,7 +321,8 @@ $('#guessBtn').onclick=()=>{
 };
 newClue();
 (function(){
-  const m=$('#meter'); const counts=[['LOL',92],['BOX',74],['???',55],['GG',41],['F',30]];
+  const m=$('#meter'); if(!m) return;
+  const counts=[['LOL',92],['BOX',74],['???',55],['GG',41],['F',30]];
   counts.forEach(([n,v])=>{const li=document.createElement('li');li.textContent=n+' '+v+'%';
     const bar=document.createElement('span');bar.className='bar';bar.style.width=v+'%';li.append(bar);m.append(li);});
 })();
@@ -325,7 +341,7 @@ function playTones(freqs){
     o.start(ctx.currentTime+i*.18); o.stop(ctx.currentTime+i*.18+.17);
   });
 }
-SOUNDS.forEach(([name,f],i)=>{
+if($('#soundGrid')) SOUNDS.forEach(([name,f],i)=>{
   const b=document.createElement('button'); b.className='sound';
   const k=document.createElement('kbd'); k.textContent=i+1;
   b.append(k,document.createTextNode(name)); b.onclick=()=>playTones(f);
@@ -337,34 +353,34 @@ document.addEventListener('keydown',e=>{
 });
 
 /* ====== timeline, vault, drivers, faq, quotes ====== */
-TIMELINE.forEach(([d,t,p])=>{
+if($('#timeline')) TIMELINE.forEach(([d,t,p])=>{
   const li=document.createElement('li');
   const a=document.createElement('div');a.className='date';a.textContent=d;
   const h=document.createElement('h3');h.textContent=t;
   const pp=document.createElement('p');pp.textContent=p;
   li.append(a,h,pp);$('#timeline').append(li);
 });
-$('#vaultCount').textContent=VAULT.length;
-VAULT.forEach((n,i)=>{
+if($('#vaultCount')) $('#vaultCount').textContent=VAULT.length;
+if($('#vaultGrid')) VAULT.forEach((n,i)=>{
   const f=document.createElement('figure');
   const ph=document.createElement('div');ph.className='ph';
   ph.textContent='#'+pad(i+1);
   const c=document.createElement('figcaption');c.textContent=n;
   f.append(ph,c);$('#vaultGrid').append(f);
 });
-DRIVERS.forEach(([n,d,t])=>{
+if($('#driverGrid')) DRIVERS.forEach(([n,d,t])=>{
   const a=document.createElement('article');a.className='card tier-'+t.toLowerCase();
   const h=document.createElement('h3');h.textContent=n;
   const p=document.createElement('p');p.textContent=d;
   a.append(h,p);$('#driverGrid').append(a);
 });
-FAQ.forEach(([q,a])=>{
+if($('#faqList')) FAQ.forEach(([q,a])=>{
   const d=document.createElement('details');
   const s=document.createElement('summary');s.textContent=q;
   const p=document.createElement('p');p.textContent=a;
   d.append(s,p);$('#faqList').append(d);
 });
-QUOTES.forEach(([t,c])=>{
+if($('#quotes')) QUOTES.forEach(([t,c])=>{
   const b=document.createElement('blockquote');
   const p=document.createElement('p');p.textContent=t;
   const ci=document.createElement('cite');ci.textContent=c;
@@ -372,17 +388,19 @@ QUOTES.forEach(([t,c])=>{
 });
 
 /* ====== chrome ====== */
-$('#year').textContent=new Date().getFullYear();
-$('#menuBtn').onclick=e=>{const o=$('#nav').classList.toggle('open');e.currentTarget.setAttribute('aria-expanded',o);};
+if($('#year')) $('#year').textContent=new Date().getFullYear();
+if($('#menuBtn')) $('#menuBtn').onclick=e=>{const o=$('#nav').classList.toggle('open');e.currentTarget.setAttribute('aria-expanded',o);};
 document.querySelectorAll('#nav a').forEach(a=>a.addEventListener('click',()=>$('#nav').classList.remove('open')));
 const toTop=$('#toTop');
-addEventListener('scroll',()=>toTop.classList.toggle('show',scrollY>600),{passive:true});
-toTop.onclick=()=>scrollTo({top:0});
+if(toTop){
+  addEventListener('scroll',()=>toTop.classList.toggle('show',scrollY>600),{passive:true});
+  toTop.onclick=()=>scrollTo({top:0});
+}
 
 /* ====== Series standings (data/standings.json) ====== */
 let ST = [], stStatus = 'all', stQuery = '';
 function renderStandings(){
-  const box = $('#stList'); box.textContent = '';
+  const box = $('#stList'); if(!box) return; box.textContent = '';
   const list = ST.filter(e => (stStatus==='all' || e.status===stStatus) &&
                               (e.name+' '+(e.series||'')).toLowerCase().includes(stQuery));
   if(!list.length){ box.textContent = ST.length ? 'No series match your search.' : 'No events loaded yet.'; return; }
@@ -413,19 +431,26 @@ function renderStandings(){
   });
 }
 function renderStChips(){
-  const c = $('#stChips'); c.textContent = '';
+  const c = $('#stChips'); if(!c) return; c.textContent = '';
   [['all','All'],['current','Current'],['finished','Finished']].forEach(([k,l])=>{
     const b = el('button','chip'+(stStatus===k?' on':''),l);
     b.onclick = ()=>{stStatus=k; renderStChips(); renderStandings();}; c.append(b);
   });
 }
-$('#stSearch').addEventListener('input', e=>{stQuery = e.target.value.trim().toLowerCase(); renderStandings();});
+if($('#stSearch')) $('#stSearch').addEventListener('input', e=>{stQuery = e.target.value.trim().toLowerCase(); renderStandings();});
 async function loadStandings(){
   try{
     const data = await (await fetch('data/standings.json',{cache:'no-store'})).json();
     ST = data.events || [];
-    if(data.updated) $('#stUpdated').textContent = 'Updated ' + new Date(data.updated).toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'}) + '.';
+    if(data.updated && $('#stUpdated')) $('#stUpdated').textContent = 'Updated ' + new Date(data.updated).toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'}) + '.';
   }catch(e){ ST = []; }
   renderStChips(); renderStandings();
 }
+
+/* ====== Initialize feeds ====== */
+loadEvents();
+loadInstagram();
+loadYouTube();
 loadStandings();
+setInterval(tick, 1000);
+tick();
