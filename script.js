@@ -3,8 +3,8 @@
 const CONFIG = {
   nextRace: nextThursdayAt(20, 0),
   raceDurationHours: 3,
+  youtubeHandle: 'AMKRacingOrganisation',
   youtubeChannelUrl: 'https://www.youtube.com/@AMKRacingOrganisation',
-  youtubeChannelId: 'UC-6zSmuerT4LvwzCy7MLNFA',
 };
 
 const TIMELINE = [
@@ -126,7 +126,7 @@ async function loadInstagram(){
   });
 }
 
-/* ====== YouTube (Auto-updating 3 Most Recent Uploads + Subscribe Button) ====== */
+/* ====== YouTube (Automatic 3-Card Grid via Official YouTube IFrame API) ====== */
 function extractYtId(v){
   if(!v) return '';
   if(typeof v === 'string'){
@@ -140,69 +140,120 @@ function extractYtId(v){
   return m ? m[1] : '';
 }
 
-function renderYouTubeVideos(vids, grid){
-  grid.textContent='';
-  vids.slice(0,3).forEach(v=>{
+async function fetchVideoTitle(vid){
+  try{
+    const url = 'https://www.youtube.com/oembed?format=json&url=' + encodeURIComponent('https://www.youtube.com/watch?v=' + vid);
+    const data = await (await fetch(url)).json();
+    return data && data.title ? data.title : 'Watch on YouTube';
+  }catch(e){
+    return 'Watch on YouTube';
+  }
+}
+
+async function renderYouTubeCards(vids, grid){
+  const top3 = vids.slice(0,3);
+  const resolved = await Promise.all(top3.map(async v => {
     const vid = extractYtId(v);
-    if(!vid) return;
+    if(!vid) return null;
+    const title = (typeof v === 'object' && v.title) ? v.title : await fetchVideoTitle(vid);
+    const pub = (typeof v === 'object') ? (v.published || v.pubDate || v.date) : '';
+    return { id: vid, title, published: pub };
+  }));
+
+  const clean = resolved.filter(Boolean);
+  if(!clean.length) return false;
+
+  grid.textContent='';
+  clean.forEach(v=>{
     const item=el('div','yt-item');
     const wrap=el('div','yt');
     const f=el('iframe');
-    f.title=v.title||'YouTube video';
+    f.title=v.title;
     f.loading='lazy';
     f.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
     f.allowFullscreen=true;
-    f.src='https://www.youtube-nocookie.com/embed/'+vid;
+    f.src='https://www.youtube-nocookie.com/embed/'+v.id;
     wrap.append(f);
-    const t=el('a','yt-title',v.title||'Watch on YouTube');
-    t.href='https://www.youtube.com/watch?v='+vid;
+    const t=el('a','yt-title',v.title);
+    t.href='https://www.youtube.com/watch?v='+v.id;
     t.target='_blank';
     t.rel='noopener';
     item.append(wrap,t);
-    const pub = v.published || v.pubDate || v.date;
-    if(pub) item.append(el('small','muted',new Date(pub).toLocaleDateString(undefined,{dateStyle:'medium'})));
+    if(v.published) item.append(el('small','muted',new Date(v.published).toLocaleDateString(undefined,{dateStyle:'medium'})));
     grid.append(item);
   });
+  return true;
 }
 
-async function fetchLiveYouTubeRss(channelId){
-  if(!channelId || channelId === 'YOUR_UC_CHANNEL_ID') return [];
-  const feedUrl = 'https://www.youtube.com/feeds/videos.xml?channel_id=' + encodeURIComponent(channelId);
+function discoverPlaylistViaYouTubeApi(channelId){
+  return new Promise(resolve => {
+    const holder = document.createElement('div');
+    holder.style.cssText = 'position:fixed;width:1px;height:1px;left:-9999px;top:-9999px;opacity:0;pointer-events:none';
+    const playerEl = document.createElement('div');
+    holder.appendChild(playerEl);
+    document.body.appendChild(holder);
 
-  // Primary: rss2json
-  try{
-    const res = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(feedUrl));
-    const data = await res.json();
-    if(data && Array.isArray(data.items) && data.items.length){
-      return data.items.slice(0,3).map(it => ({
-        id: extractYtId(it.link || it.guid),
-        title: it.title,
-        published: it.pubDate
-      })).filter(v => v.id);
+    let done = false;
+    const finish = ids => {
+      if(done) return;
+      done = true;
+      setTimeout(() => holder.remove(), 200);
+      resolve(ids || []);
+    };
+
+    const timer = setTimeout(() => finish([]), 12000);
+
+    const createPlayer = () => {
+      const playerVars = (channelId && channelId.startsWith('UC'))
+        ? { listType: 'playlist', list: 'UU' + channelId.slice(2) }
+        : { listType: 'user_uploads', list: CONFIG.youtubeHandle };
+
+      new window.YT.Player(playerEl, {
+        height: '10',
+        width: '10',
+        playerVars,
+        events: {
+          onReady: ev => {
+            try{
+              const list = ev.target.getPlaylist ? ev.target.getPlaylist() : null;
+              if(Array.isArray(list) && list.length){
+                clearTimeout(timer);
+                finish(list.slice(0,3));
+              }
+            }catch(e){}
+          },
+          onStateChange: ev => {
+            try{
+              const list = ev.target.getPlaylist ? ev.target.getPlaylist() : null;
+              if(Array.isArray(list) && list.length){
+                clearTimeout(timer);
+                finish(list.slice(0,3));
+              }
+            }catch(e){}
+          },
+          onError: () => {
+            clearTimeout(timer);
+            finish([]);
+          }
+        }
+      });
+    };
+
+    if(window.YT && window.YT.Player){
+      createPlayer();
+    } else {
+      const prev = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => {
+        if(typeof prev === 'function') prev();
+        createPlayer();
+      };
+      if(!document.querySelector('script[src*="youtube.com/iframe_api"]')){
+        const s = document.createElement('script');
+        s.src = 'https://www.youtube.com/iframe_api';
+        document.head.appendChild(s);
+      }
     }
-  }catch(e){}
-
-  // Secondary: AllOrigins XML proxy
-  try{
-    const res = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(feedUrl));
-    const data = await res.json();
-    if(data && data.contents){
-      const xml = new DOMParser().parseFromString(data.contents, 'text/xml');
-      const entries = Array.from(xml.querySelectorAll('entry')).slice(0,3);
-      return entries.map(entry => {
-        const vidNode = entry.getElementsByTagName('yt:videoId')[0];
-        const titleNode = entry.querySelector('title');
-        const pubNode = entry.querySelector('published');
-        return {
-          id: vidNode ? vidNode.textContent.trim() : '',
-          title: titleNode ? titleNode.textContent.trim() : '',
-          published: pubNode ? pubNode.textContent.trim() : ''
-        };
-      }).filter(v => extractYtId(v));
-    }
-  }catch(e){}
-
-  return [];
+  });
 }
 
 async function loadYouTube(){
@@ -212,31 +263,36 @@ async function loadYouTube(){
 
   let vids = [];
   let channelUrl = CONFIG.youtubeChannelUrl;
-  let channelId = CONFIG.youtubeChannelId;
+  let channelId = '';
 
-  // 1. Check data/youtube.json for channelId or cached videos
+  // 1. Check data/youtube.json if present
   try{
     const data = await (await fetch('data/youtube.json',{cache:'no-store'})).json();
     if(data.channelUrl) channelUrl = data.channelUrl;
-    if(data.channelId) channelId = data.channelId;
+    if(data.channelId && data.channelId.startsWith('UC')) channelId = data.channelId;
     const list = Array.isArray(data) ? data : (data.videos || data.items || []);
     vids = list.filter(v => extractYtId(v));
   }catch(e){}
-
-  // 2. Always try fetching the live YouTube RSS feed first so newest uploads appear automatically
-  const liveVids = await fetchLiveYouTubeRss(channelId);
-  if(liveVids.length) vids = liveVids;
 
   if(subBtn && channelUrl){
     subBtn.href = channelUrl.includes('?') ? channelUrl : channelUrl + '?sub_confirmation=1';
   }
 
-  if(vids.length){
-    renderYouTubeVideos(vids, grid);
-  } else {
-    grid.textContent='';
-    grid.append(el('p','muted','Visit the AMK Racing Organisation YouTube channel to watch the latest uploads.'));
+  // 2. Discover the 3 latest uploads directly via YouTube's official IFrame API
+  const liveIds = await discoverPlaylistViaYouTubeApi(channelId);
+  if(liveIds.length){
+    const ok = await renderYouTubeCards(liveIds, grid);
+    if(ok) return;
   }
+
+  // 3. Fallback to any cached videos in data/youtube.json
+  if(vids.length){
+    const ok = await renderYouTubeCards(vids, grid);
+    if(ok) return;
+  }
+
+  grid.textContent='';
+  grid.append(el('p','muted','Visit the AMK Racing Organisation YouTube channel to watch the latest uploads.'));
 }
 
 /* ====== timeline & faq ====== */
