@@ -1,208 +1,167 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AMK Racing Organization</title>
-<meta name="description" content="The hub for everything AMKRO: upcoming races, standings, social media, newspaper, and more.">
-<meta name="theme-color" content="#57141e">
-<link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>AMKRO — AMK Racing Organization</title>
+  <meta name="description" content="AMK Racing Organization — sim racing league nights, endurance races, setups and standings.">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<a class="skip" href="#main">Skip to content</a>
+  <a class="skip" href="#main">Skip to content</a>
 
-<header class="site-header">
-  <a class="brand" href="#top"><span class="logo">A</span> AMKRO</a>
-  <nav id="nav" aria-label="Main">
-    <a href="#event">Race</a>
-    <a href="#standings">Standings</a>
-    <a href="#instagram">Instagram</a>
-    <a href="#youtube">YouTube</a>
-    <a href="#racepedia">Racepedia</a>
-    <a href="#tools">Tools</a>
-    <a href="#lore">Lore</a>
-    <a href="#vault">Vault</a>
-    <a href="#faq">FAQ</a>
-    <a href="#drivers">Drivers</a>
-  </nav>
-  <a class="live-pill" id="livePill" href="https://www.twitch.tv/" target="_blank" rel="noopener">Live now</a>
-  <button class="menu-btn" id="menuBtn" aria-label="Menu" aria-expanded="false">Menu</button>
-</header>
+  <header class="site-header">
+    <a class="brand" href="#top"><span class="logo">A</span> AMKRO</a>
+    <nav id="nav">
+      <a href="#race">Race</a>
+      <a href="#standings">Standings</a>
+      <a href="#instagram">Instagram</a>
+      <a href="#youtube">YouTube</a>
+      <a href="#racepedia">Racepedia</a>
+      <a href="#tools">Tools</a>
+      <a href="#lore">Lore</a>
+      <a href="#vault">Vault</a>
+      <a href="#faq">FAQ</a>
+      <a href="#drivers">Drivers</a>
+    </nav>
+    <a class="live-pill off" id="livePill" href="#race">Offline</a>
+    <button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="nav">Menu</button>
+  </header>
 
-<main id="main">
-<section class="hero" id="top">
-  <div class="hero-text">
-    <h1>Are AMKRO racing right now?</h1>
-    <p class="answer" id="answer">YES.</p>
-    <p class="sub" id="sub">*pit stop in progress*</p>
-    <p class="lead">The hub for AMKRO's sim racing league nights, endurance races, setups and team lore.</p>
-    <div class="cta">
-      <a class="btn primary" href="#tools">Take me to the tools →</a>
-      <a class="btn" href="https://www.youtube.com/" target="_blank" rel="noopener">Watch the latest race →</a>
-    </div>
-    <div class="countdown" aria-live="off">
-      <span class="label" id="cdLabel">Next race in</span>
-      <span id="countdown">00 days : 00 hrs : 00 min : 00 sec</span>
-    </div>
-    <div class="stats">
-      <div><small>Longest off-season</small><strong>72 days</strong></div>
-      <div><small>Races this month</small><strong id="racesMonth">11</strong></div>
-      <div><small>Podiums this season</small><strong>14</strong></div>
-    </div>
-  </div>
-  <aside class="chat" aria-label="Team radio">
-    <div class="chat-head"><span>Team radio</span><span class="tag" id="chatTag">Live</span></div>
-    <ul id="chatList"></ul>
-  </aside>
-</section>
+  <main id="main">
+    <!-- Organization Logo Hero Banner -->
+    <section class="logo-hero" id="top" aria-label="AMK Racing Organization">
+      <img src="logo.png" alt="AMK Racing Organization">
+    </section>
 
-<section id="event" class="block">
-  <h2>Upcoming races</h2>
-  <div class="event-list" id="eventList"><p class="muted">Loading races…</p></div>
-  <p><a class="btn" href="https://paddock.worldsimseries.com/organizations/2b746de0d67e2930b18aacfa19e07eeb#/events" target="_blank" rel="noopener">All events on Paddock →</a></p>
-</section>
+    <!-- Upcoming Races -->
+    <section class="block" id="race">
+      <h2>Upcoming races</h2>
+      <div class="event-list" id="eventList">Loading upcoming races…</div>
+    </section>
 
-<section id="standings" class="block">
-  <h2>Series standings</h2>
-  <p class="muted">All current and finished AMKRO events. <span id="stUpdated"></span></p>
-  <div class="tools-row">
-    <input id="stSearch" type="search" placeholder="Search the series name…" aria-label="Search series">
-    <div class="chips" id="stChips"></div>
-  </div>
-  <div class="st-list" id="stList"><p class="muted">Loading…</p></div>
-</section>
-
-<section id="instagram" class="block alt ig-dark">
-  <h2>Instagram</h2>
-  <div class="ig-grid" id="igGrid">
-    <p class="muted">Loading…</p>
-  </div>
-</section>
-
-<section id="youtube" class="block">
-  <h2>YouTube</h2>
-  <p class="muted">The three latest videos from AMK Racing Organisation, head organisation of the Tatuus World Series.</p>
-  <div class="yt-grid" id="ytGrid">
-    <div class="yt-item">
-      <div class="yt"><iframe title="AMK Racing Organisation videos" src="https://www.youtube-nocookie.com/embed/videoseries?list=UULF-6zSmuerT4LvwzCy7MLNFA" loading="lazy" allowfullscreen></iframe></div>
-    </div>
-  </div>
-  <p><a class="btn" href="https://www.youtube.com/@AMKRacingOrganisation" target="_blank" rel="noopener">Subscribe on YouTube →</a></p>
-</section>
-
-<section id="racepedia" class="block">
-  <h2>Racepedia</h2>
-  <div class="tools-row">
-    <input id="search" type="search" placeholder="Search the lore… try “undercut”" aria-label="Search">
-    <div class="chips" id="chips"></div>
-  </div>
-  <div class="cards" id="cards"></div>
-</section>
-
-<section id="tools" class="block alt">
-  <h2>The toolbox</h2>
-  <div class="tool-grid">
-    <article class="tool" id="t-lap">
-      <h3>Lap time delta</h3>
-      <p>Compare two lap times. How far off the pace are you?</p>
-      <div class="form">
-        <input id="lapA" placeholder="Your lap 1:32.450">
-        <input id="lapB" placeholder="Target lap 1:31.800">
-        <button class="btn" id="lapBtn">Compare</button>
+    <!-- Series Standings -->
+    <section class="block alt" id="standings">
+      <h2>Series standings</h2>
+      <p class="muted">All current and finished AMKRO events. <span id="stUpdated"></span></p>
+      <div class="tools-row">
+        <input type="search" id="stSearch" placeholder="Search the series name…" aria-label="Search series">
+        <div class="chips" id="stChips"></div>
       </div>
-      <p class="out" id="lapOut">Gap: ?</p>
-    </article>
-    <article class="tool" id="t-fuel">
-      <h3>Fuel calculator</h3>
-      <p>How much fuel do you need for the race?</p>
-      <div class="form">
-        <input id="fRace" type="number" placeholder="Race length (min)">
-        <input id="fLap" placeholder="Avg lap 1:45.0">
-        <input id="fUse" type="number" step="0.01" placeholder="Fuel per lap (L)">
-        <button class="btn" id="fuelBtn">Calculate</button>
+      <div class="st-list" id="stList"></div>
+    </section>
+
+    <!-- Instagram -->
+    <section class="block" id="instagram">
+      <h2>Instagram</h2>
+      <div class="ig-grid" id="igGrid">Loading Instagram…</div>
+    </section>
+
+    <!-- YouTube -->
+    <section class="block alt" id="youtube">
+      <h2>YouTube</h2>
+      <p class="muted">The three latest videos from AMK Racing Organisation, head organisation of the Tatuus World Series.</p>
+      <div class="yt-grid" id="ytGrid"></div>
+    </section>
+
+    <!-- Racepedia -->
+    <section class="block" id="racepedia">
+      <h2>Racepedia</h2>
+      <div class="tools-row">
+        <input type="search" id="search" placeholder="Search racing terms & team lore…" aria-label="Search Racepedia">
+        <div class="chips" id="chips"></div>
       </div>
-      <p class="out" id="fuelOut">Fuel: ?</p>
-    </article>
-    <article class="tool" id="t-quiz">
-      <h3>Am I a real AMKRO driver?</h3>
-      <p>Prove us wrong or uninstall the sim.</p>
-      <button class="btn" id="quizBtn">Take the test</button>
-      <div id="quiz"></div>
-      <p class="out" id="quizOut">?% AMKRO</p>
-    </article>
-    <article class="tool" id="t-corner">
-      <h3>Corner roulette</h3>
-      <p>Spin to get a random track to practice tonight.</p>
-      <button class="btn" id="spinBtn">Spin</button>
-      <p class="out" id="spinOut">?</p>
-    </article>
-    <article class="tool" id="t-guess">
-      <h3>Guess the car</h3>
-      <p>Guess the car from the clue. How hard can it be?</p>
-      <p id="clue" class="clue"></p>
-      <div class="form"><input id="guess" placeholder="Your guess"><button class="btn" id="guessBtn">Guess</button></div>
-      <p class="out" id="guessOut"></p>
-    </article>
-    <article class="tool" id="t-meter">
-      <h3>Chat meter</h3>
-      <p>The things team chat spams most.</p>
-      <ol class="meter" id="meter"></ol>
-    </article>
-  </div>
-</section>
+      <div class="cards" id="cards"></div>
+    </section>
 
-<section id="sounds" class="block">
-  <h2>Soundboard</h2>
-  <p class="muted">Team radio clips. Replace the generated beeps with your own mp3 files in <code>/sounds</code>.</p>
-  <div class="sounds" id="soundGrid"></div>
-</section>
+    <!-- Tools -->
+    <section class="block alt" id="tools">
+      <h2>Pit Wall Tools</h2>
+      <div class="tool-grid">
+        <div class="tool">
+          <h3>Lap Time Gap</h3>
+          <div class="form">
+            <input id="lapA" placeholder="Lap A (e.g. 1:32.450)">
+            <input id="lapB" placeholder="Lap B (e.g. 1:32.890)">
+            <button class="btn primary" id="lapBtn">Compare</button>
+          </div>
+          <p class="out" id="lapOut"></p>
+        </div>
+        <div class="tool">
+          <h3>Fuel Calculator</h3>
+          <div class="form">
+            <input id="fRace" type="number" placeholder="Race minutes (e.g. 60)">
+            <input id="fLap" placeholder="Avg lap time (e.g. 1:48.200)">
+            <input id="fUse" type="number" step="0.1" placeholder="Litres per lap (e.g. 2.8)">
+            <button class="btn primary" id="fuelBtn">Calculate</button>
+          </div>
+          <p class="out" id="fuelOut"></p>
+        </div>
+        <div class="tool">
+          <h3>Random Track Spinner</h3>
+          <p class="out" id="spinOut">Spa-Francorchamps</p>
+          <button class="btn primary" id="spinBtn">Spin track</button>
+        </div>
+        <div class="tool">
+          <h3>AMKRO Quiz</h3>
+          <div id="quiz"><button class="btn primary" id="quizBtn">Start quiz</button></div>
+          <p class="out" id="quizOut"></p>
+        </div>
+        <div class="tool">
+          <h3>Guess the Car</h3>
+          <p class="clue" id="clue"></p>
+          <div class="form">
+            <input id="guess" placeholder="Manufacturer…">
+            <button class="btn primary" id="guessBtn">Guess</button>
+          </div>
+          <p class="out" id="guessOut"></p>
+        </div>
+        <div class="tool">
+          <h3>Radio Telemetry</h3>
+          <ul class="meter" id="meter"></ul>
+        </div>
+      </div>
+    </section>
 
-<section id="lore" class="block alt">
-  <h2>The lore</h2>
-  <p class="muted">From the first league night to the championship fight.</p>
-  <ol class="timeline" id="timeline"></ol>
-</section>
+    <!-- Soundboard -->
+    <section class="block">
+      <h2>Team Radio Soundboard</h2>
+      <div class="sounds" id="soundGrid"></div>
+    </section>
 
-<section id="vault" class="block">
-  <h2>The vault</h2>
-  <p class="muted"><span id="vaultCount">0</span> screenshots, memes, liveries and onboard clips, and counting.</p>
-  <div class="vault" id="vaultGrid"></div>
-</section>
+    <!-- Lore Timeline -->
+    <section class="block alt" id="lore">
+      <h2>Team History</h2>
+      <ul class="timeline" id="timeline"></ul>
+    </section>
 
-<section id="drivers" class="block alt">
-  <h2>Drivers</h2>
-  <div class="cards" id="driverGrid"></div>
-</section>
+    <!-- Vault -->
+    <section class="block" id="vault">
+      <h2>The Vault (<span id="vaultCount">0</span>)</h2>
+      <div class="vault" id="vaultGrid"></div>
+    </section>
 
-<section id="faq" class="block">
-  <h2>Things people Google</h2>
-  <div class="faq" id="faqList"></div>
-</section>
+    <!-- FAQ -->
+    <section class="block alt" id="faq">
+      <h2>FAQ</h2>
+      <div class="faq" id="faqList"></div>
+    </section>
 
-<section class="block alt">
-  <h2>What they say</h2>
-  <div class="quotes" id="quotes"></div>
-</section>
+    <!-- Drivers & Quotes -->
+    <section class="block" id="drivers">
+      <h2>Drivers</h2>
+      <div class="cards" id="driverGrid"></div>
+      <h2 style="margin-top:48px">Overheard on Radio</h2>
+      <div class="quotes" id="quotes"></div>
+    </section>
+  </main>
 
-<section id="find" class="block">
-  <h2>Where to find us</h2>
-  <ul class="links">
-    <li><a href="https://www.youtube.com/@AMKRacingOrganisation" target="_blank" rel="noopener">YouTube</a></li>
-    <li><a href="https://www.instagram.com/teamamkro/" target="_blank" rel="noopener">Instagram (team)</a></li>
-    <li><a href="https://www.instagram.com/amkracingorganization/" target="_blank" rel="noopener">Instagram (organizer)</a></li>
-    <li><a href="https://paddock.worldsimseries.com/organizations/2b746de0d67e2930b18aacfa19e07eeb#/events" target="_blank" rel="noopener">WorldSimSeries Paddock</a></li>
-    <li><a href="https://github.com/aegavars/AMKRO-Website" target="_blank" rel="noopener">GitHub</a></li>
-  </ul>
-</section>
-</main>
+  <footer class="site-footer">
+    <div class="brand"><span class="logo">A</span> AMKRO</div>
+    <p>© <span id="year"></span> AMK Racing Organization</p>
+  </footer>
 
-<footer class="site-footer">
-  <div class="brand"><span class="logo">A</span> AMKRO</div>
-  <p>Sim racing team hub. Not affiliated with any simulator publisher or series organiser.</p>
-  <p>© <span id="year"></span> AMKRO Racing</p>
-</footer>
-
-<button id="toTop" aria-label="Back to top">↑</button>
-<script src="script.js"></script>
+  <button id="toTop" aria-label="Back to top">↑</button>
+  <script src="script.js"></script>
 </body>
 </html>
