@@ -4,7 +4,7 @@ const CONFIG = {
   nextRace: nextThursdayAt(20, 0),
   raceDurationHours: 3,
   youtubeChannelUrl: 'https://www.youtube.com/@AMKRacingOrganisation',
-  youtubeChannelId: '', // Optional: paste your UC... channel ID here for automatic live RSS fallback
+  youtubeChannelId: 'UC-6zSmuerT4LvwzCy7MLNFA',
 };
 
 const TIMELINE = [
@@ -126,7 +126,7 @@ async function loadInstagram(){
   });
 }
 
-/* ====== YouTube (3 Most Recent Uploads + Subscribe Button) ====== */
+/* ====== YouTube (Auto-updating 3 Most Recent Uploads + Subscribe Button) ====== */
 function extractYtId(v){
   if(!v) return '';
   if(typeof v === 'string'){
@@ -165,6 +165,46 @@ function renderYouTubeVideos(vids, grid){
   });
 }
 
+async function fetchLiveYouTubeRss(channelId){
+  if(!channelId || channelId === 'YOUR_UC_CHANNEL_ID') return [];
+  const feedUrl = 'https://www.youtube.com/feeds/videos.xml?channel_id=' + encodeURIComponent(channelId);
+
+  // Primary: rss2json
+  try{
+    const res = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(feedUrl));
+    const data = await res.json();
+    if(data && Array.isArray(data.items) && data.items.length){
+      return data.items.slice(0,3).map(it => ({
+        id: extractYtId(it.link || it.guid),
+        title: it.title,
+        published: it.pubDate
+      })).filter(v => v.id);
+    }
+  }catch(e){}
+
+  // Secondary: AllOrigins XML proxy
+  try{
+    const res = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(feedUrl));
+    const data = await res.json();
+    if(data && data.contents){
+      const xml = new DOMParser().parseFromString(data.contents, 'text/xml');
+      const entries = Array.from(xml.querySelectorAll('entry')).slice(0,3);
+      return entries.map(entry => {
+        const vidNode = entry.getElementsByTagName('yt:videoId')[0];
+        const titleNode = entry.querySelector('title');
+        const pubNode = entry.querySelector('published');
+        return {
+          id: vidNode ? vidNode.textContent.trim() : '',
+          title: titleNode ? titleNode.textContent.trim() : '',
+          published: pubNode ? pubNode.textContent.trim() : ''
+        };
+      }).filter(v => extractYtId(v));
+    }
+  }catch(e){}
+
+  return [];
+}
+
 async function loadYouTube(){
   const grid=$('#ytGrid');
   const subBtn=$('#ytSubBtn');
@@ -174,7 +214,7 @@ async function loadYouTube(){
   let channelUrl = CONFIG.youtubeChannelUrl;
   let channelId = CONFIG.youtubeChannelId;
 
-  // 1. Try loading from data/youtube.json
+  // 1. Check data/youtube.json for channelId or cached videos
   try{
     const data = await (await fetch('data/youtube.json',{cache:'no-store'})).json();
     if(data.channelUrl) channelUrl = data.channelUrl;
@@ -183,20 +223,9 @@ async function loadYouTube(){
     vids = list.filter(v => extractYtId(v));
   }catch(e){}
 
-  // 2. If data/youtube.json has no videos yet and a channelId is known, fetch live RSS feed
-  if(!vids.length && channelId){
-    try{
-      const rss = encodeURIComponent('https://www.youtube.com/feeds/videos.xml?channel_id=' + channelId);
-      const res = await (await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + rss)).json();
-      if(res && Array.isArray(res.items)){
-        vids = res.items.slice(0,3).map(it => ({
-          id: extractYtId(it.link || it.guid),
-          title: it.title,
-          published: it.pubDate
-        })).filter(v => v.id);
-      }
-    }catch(e){}
-  }
+  // 2. Always try fetching the live YouTube RSS feed first so newest uploads appear automatically
+  const liveVids = await fetchLiveYouTubeRss(channelId);
+  if(liveVids.length) vids = liveVids;
 
   if(subBtn && channelUrl){
     subBtn.href = channelUrl.includes('?') ? channelUrl : channelUrl + '?sub_confirmation=1';
@@ -206,8 +235,7 @@ async function loadYouTube(){
     renderYouTubeVideos(vids, grid);
   } else {
     grid.textContent='';
-    const fallback = el('p','muted','No videos loaded yet — visit the AMK Racing Organisation YouTube channel to watch the latest uploads.');
-    grid.append(fallback);
+    grid.append(el('p','muted','Visit the AMK Racing Organisation YouTube channel to watch the latest uploads.'));
   }
 }
 
