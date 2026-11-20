@@ -182,51 +182,92 @@ async function loadEvents(){
   }
 }
 
-/* ====== Instagram (data/instagram.json) ====== */
+/* ====== Instagram (Header + Bio/Stats + Live Recent Posts) ====== */
 const fmtNum = n => (n===null||n===undefined||n==='') ? '–' : Number(n).toLocaleString('en');
 async function loadInstagram(){
   const grid=$('#igGrid');
   if(!grid) return;
+
+  let accounts = [
+    {
+      key: 'organizer',
+      handle: 'amkracingorganization',
+      name: 'AMK Racing Organization',
+      bio: 'Race announcements for the Tatuus World Series.',
+      posts: null, followers: null, following: null
+    },
+    {
+      key: 'team',
+      handle: 'teamamkro',
+      name: 'Team AMKRO',
+      bio: 'Race entries and results.',
+      posts: null, followers: null, following: null
+    }
+  ];
+
   try{
-    const data=await (await fetch('data/instagram.json',{cache:'no-store'})).json();
-    grid.textContent='';
-    (data.accounts||[]).forEach(acc=>{
-      const profileUrl='https://www.instagram.com/'+acc.handle+'/';
-      const col=el('div','ig-col');
+    const data = await (await fetch('data/instagram.json',{cache:'no-store'})).json();
+    if(data.accounts && data.accounts.length) accounts = data.accounts;
+  }catch(e){}
 
-      const head=el('div','ig-card ig-profile');
-      const av=el('div','ig-avatar');
-      if(acc.avatar){const i=el('img');i.src=acc.avatar;i.alt='';av.append(i);} else av.textContent=(acc.name||acc.handle).charAt(0);
-      const info=el('div','ig-info');
-      const h=el('a','ig-handle','@'+acc.handle); h.href=profileUrl; h.target='_blank'; h.rel='noopener';
-      const nm=el('div','ig-name',acc.name||'');
-      const stats=el('div','ig-stats');
+  grid.textContent='';
+  accounts.forEach(acc=>{
+    const profileUrl = 'https://www.instagram.com/' + acc.handle + '/';
+    const col = el('div','ig-col');
+
+    // Top Header / Bio Card
+    const head = el('div','ig-card ig-profile');
+    const av = el('div','ig-avatar');
+    if(acc.avatar){
+      const img = el('img'); img.src=acc.avatar; img.alt=acc.name||acc.handle; av.append(img);
+    } else {
+      av.textContent = (acc.name||acc.handle).charAt(0).toUpperCase();
+    }
+    const info = el('div','ig-info');
+    const h = el('a','ig-handle','@'+acc.handle); h.href=profileUrl; h.target='_blank'; h.rel='noopener';
+    const nm = el('div','ig-name',acc.name||'');
+    info.append(h, nm);
+
+    if(acc.posts !== null || acc.followers !== null || acc.following !== null){
+      const stats = el('div','ig-stats');
       [['posts',acc.posts],['followers',acc.followers],['following',acc.following]].forEach(([l,v])=>{
-        const s=el('span'); const b=el('b',null,fmtNum(v)); s.append(b,document.createTextNode(' '+l)); stats.append(s);
+        const s = el('span'); const b = el('b',null,fmtNum(v));
+        s.append(b, document.createTextNode(' '+l)); stats.append(s);
       });
-      info.append(h,nm,stats);
-      if(acc.bio) info.append(el('p','ig-bio',acc.bio));
-      const follow=el('a','btn ig-btn','Follow'); follow.href=profileUrl; follow.target='_blank'; follow.rel='noopener';
-      head.append(av,info,follow);
+      info.append(stats);
+    }
 
-      const post=el('a','ig-card ig-post');
-      const L=acc.latest||{};
-      post.href=L.url||profileUrl; post.target='_blank'; post.rel='noopener';
-      const cap=el('div','ig-label', acc.key==='organizer' ? 'Latest announcement' : 'Latest post');
-      post.append(cap);
-      if(L.image){const i=el('img');i.src=L.image;i.alt=L.caption||'Latest Instagram post';i.loading='lazy';post.append(i);}
-      else post.append(el('div','ig-empty','Open on Instagram'));
-      if(L.caption) post.append(el('p','ig-caption',L.caption));
-      if(L.date) post.append(el('small','ig-date',L.date));
+    if(acc.bio) info.append(el('p','ig-bio',acc.bio));
+    const follow = el('a','btn ig-btn','Follow @'+acc.handle); follow.href=profileUrl; follow.target='_blank'; follow.rel='noopener';
+    head.append(av, info, follow);
+    col.append(head);
 
-      col.append(head,post); grid.append(col);
-    });
-  }catch(e){
-    grid.textContent='';
-    [['teamamkro','Team AMKRO'],['amkracingorganization','AMK Racing Organization']].forEach(([h,n])=>{
-      const a=el('a','btn','@'+h+' on Instagram'); a.href='https://www.instagram.com/'+h+'/'; a.target='_blank'; a.rel='noopener'; grid.append(a);
-    });
-  }
+    // Recent Posts below header (manual posts from JSON if provided, plus live Instagram profile embed)
+    if(acc.recent && acc.recent.length){
+      const list = el('div','ig-posts-list');
+      acc.recent.forEach(p=>{
+        const post = el('a','ig-card ig-post');
+        post.href = p.url || profileUrl; post.target='_blank'; post.rel='noopener';
+        if(p.image){ const i=el('img'); i.src=p.image; i.alt=p.caption||'Instagram post'; i.loading='lazy'; post.append(i); }
+        if(p.caption) post.append(el('p','ig-caption',p.caption));
+        if(p.date) post.append(el('small','ig-date',p.date));
+        list.append(post);
+      });
+      col.append(list);
+    } else {
+      const wrap = el('div','ig-embed-wrap');
+      const frame = el('iframe');
+      frame.src = 'https://www.instagram.com/' + acc.handle + '/embed/';
+      frame.title = '@' + acc.handle + ' recent Instagram posts';
+      frame.loading = 'lazy';
+      frame.setAttribute('scrolling','no');
+      frame.setAttribute('allowtransparency','true');
+      wrap.append(frame);
+      col.append(wrap);
+    }
+
+    grid.append(col);
+  });
 }
 
 /* ====== YouTube (data/youtube.json) ====== */
