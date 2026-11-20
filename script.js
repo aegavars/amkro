@@ -1,7 +1,6 @@
 'use strict';
 /* ====== EDIT ME: team content ====== */
 const CONFIG = {
-  // Set to an ISO date string to drive the countdown. If it is in the past the site shows "racing now" for 3 hours.
   nextRace: nextThursdayAt(20, 0),
   raceDurationHours: 3,
 };
@@ -25,13 +24,6 @@ const ENTRIES = [
 ];
 const TIERS = ['All','Rookie','Club','Pro','Elite','Legend','Champion'];
 
-const RADIO = [
-  ['Nova','BOX BOX BOX'],['Kris','tyres are gone'],['Milo','who left the mic open?'],
-  ['Ana','P3, close the gap!'],['Dex','fuel is fine, trust me'],['Rin','yellow in sector 2'],
-  ['Nova','pit window opens in 2'],['Kris','he divebombed me again'],['Milo','GOLDEN LAP'],
-  ['Ana','is the stream on?'],['Dex','copy copy'],['Rin','lag, sorry'],['Nova','LETS GOOOO'],
-];
-
 const SOUNDS = [
   ['BOX BOX',[880,660]],['DRS OPEN',[440,880]],['FASTEST LAP',[523,659,784]],
   ['YELLOW FLAG',[330,330]],['ENGINE CUT',[220,110]],['CHEQUERED',[784,784,988]],
@@ -41,7 +33,7 @@ const TIMELINE = [
   ['JAN 2023','Team founded','A few friends, one Discord server, one league.'],
   ['APR 2023','First league win','Our first podium on the road to the title.'],
   ['SEP 2023','Endurance debut','First 6-hour race. Survived.'],
-  ['FEB 2024','New liveries','The red-and-white colours arrive.'],
+  ['FEB 2024','New liveries','The burgundy, black and white colours arrive.'],
   ['JUL 2024','24-hour finish','Completed a full 24 hours with the whole squad.'],
   ['JAN 2025','Roster expands','More drivers, more cars, more chaos.'],
   ['OCT 2025','Season champions','Team championship secured.'],
@@ -58,11 +50,11 @@ const DRIVERS = [
 ];
 
 const FAQ = [
-  ['Who is AMKRO?','A sim racing team. Replace this with your own team story.'],
-  ['What do you race?','League nights and endurance events. Put your sims and series here.'],
+  ['Who is AMKRO?','AMK Racing Organization — a sim racing organization and team.'],
+  ['What do you race?','League nights and endurance events across Assetto Corsa and WSS.'],
   ['How do I join?','Open the Discord, introduce yourself and join a practice night.'],
   ['Do I need a wheel?','A wheel and pedals help, but a controller is fine to start.'],
-  ['When are race nights?','Every Thursday at 20:00 local time. See the countdown at the top.'],
+  ['When are race nights?','Check the Upcoming Races schedule above for all live and scheduled events.'],
   ['What is a rejuicer?','Nothing here. We call it a pit stop.'],
 ];
 
@@ -95,7 +87,6 @@ function nextThursdayAt(h,m){
   const d = new Date(); d.setHours(h,m,0,0);
   const add = (4 - d.getDay() + 7) % 7;
   d.setDate(d.getDate()+add);
-  if (d < new Date() && add===0) {/* today but passed */}
   return d.toISOString();
 }
 function parseLap(s){
@@ -107,41 +98,33 @@ function fmtLap(t){
   const m = Math.floor(t/60), s = (t-m*60).toFixed(3);
   return m+':'+(s.length<6?'0':'')+s;
 }
+function el(tag, cls, text){const e=document.createElement(tag); if(cls)e.className=cls; if(text!==undefined)e.textContent=text; return e;}
 
-/* ====== live status & countdown ====== */
-let EVENT = null; // set by loadEvents()
+/* ====== live pill & event countdowns ====== */
+let EVENT = null;
+let LIST = [];
+const evDur = e => (e.durationHours||CONFIG.raceDurationHours)*3600e3;
+
 function tick(){
   const start = new Date(EVENT ? EVENT.start : CONFIG.nextRace).getTime();
   const end = start + (EVENT && EVENT.durationHours ? EVENT.durationHours : CONFIG.raceDurationHours)*3600e3;
   const now = Date.now();
   const live = now>=start && now<=end;
   const pill = $('#livePill');
-  pill.classList.toggle('off', !live);
-  pill.textContent = live ? 'Live now' : 'Offline';
-  $('#answer').textContent = live ? 'YES.' : 'NOPE.';
-  $('#sub').textContent = live ? '*pit stop in progress*' : '*back in the garage*';
-  $('#chatTag').textContent = live ? 'Live' : 'Offline';
-  $('#chatTag').classList.toggle('off', !live);
-  $('#cdLabel').textContent = live ? 'Racing right now' : 'Next race in';
-  let diff = live ? end-now : Math.max(0,start-now);
-  const d = Math.floor(diff/864e5); diff-=d*864e5;
-  const h = Math.floor(diff/36e5); diff-=h*36e5;
-  const mi = Math.floor(diff/6e4); diff-=mi*6e4;
-  const s = Math.floor(diff/1e3);
-  const txt = `${pad(d)} days : ${pad(h)} hrs : ${pad(mi)} min : ${pad(s)} sec`;
-  $('#countdown').textContent = txt;
+  if(pill){
+    pill.classList.toggle('off', !live);
+    pill.textContent = live ? 'Live now' : 'Offline';
+  }
   tickEvents();
 }
 
-/* ====== events (data/events.json, written by scripts/update_events.py) ====== */
-let LIST = [];
-const evDur = e => (e.durationHours||CONFIG.raceDurationHours)*3600e3;
 function fmtCd(ms){
   const d=Math.floor(ms/864e5); ms-=d*864e5;
   const h=Math.floor(ms/36e5); ms-=h*36e5;
   const m=Math.floor(ms/6e4); ms-=m*6e4;
   return `${pad(d)} days : ${pad(h)} hrs : ${pad(m)} min : ${pad(Math.floor(ms/1e3))} sec`;
 }
+
 function tickEvents(){
   const now=Date.now();
   document.querySelectorAll('.event').forEach((card,i)=>{
@@ -153,6 +136,7 @@ function tickEvents(){
     else {label.textContent='Starts in'; cd.textContent=fmtCd(start-now);}
   });
 }
+
 function renderEvents(){
   const box=$('#eventList'); box.textContent='';
   LIST.forEach((e,i)=>{
@@ -171,13 +155,14 @@ function renderEvents(){
     art.append(thumb,body); box.append(art);
   });
 }
+
 async function loadEvents(){
   try{
     const data = await (await fetch('data/events.json',{cache:'no-store'})).json();
     const all = (data.events||[]).slice().sort((a,b)=>new Date(a.start)-new Date(b.start));
     const now = Date.now();
     const upcoming = all.filter(e=>new Date(e.start).getTime()+evDur(e)>=now);
-    LIST = upcoming.length ? upcoming : all.slice(-1);   // nothing upcoming: show the most recent one
+    LIST = upcoming.length ? upcoming : all.slice(-1);
     EVENT = LIST[0] || null;
     if(!LIST.length){$('#eventList').textContent='No races scheduled yet. Check the Paddock.'; return;}
     renderEvents(); tick();
@@ -187,9 +172,8 @@ async function loadEvents(){
 }
 loadEvents();
 
-/* ====== Instagram (data/instagram.json, dark cards: profile header + latest post) ====== */
+/* ====== Instagram (data/instagram.json) ====== */
 const fmtNum = n => (n===null||n===undefined||n==='') ? '–' : Number(n).toLocaleString('en');
-function el(tag, cls, text){const e=document.createElement(tag); if(cls)e.className=cls; if(text!==undefined)e.textContent=text; return e;}
 async function loadInstagram(){
   const grid=$('#igGrid');
   try{
@@ -199,7 +183,6 @@ async function loadInstagram(){
       const profileUrl='https://www.instagram.com/'+acc.handle+'/';
       const col=el('div','ig-col');
 
-      // profile header
       const head=el('div','ig-card ig-profile');
       const av=el('div','ig-avatar');
       if(acc.avatar){const i=el('img');i.src=acc.avatar;i.alt='';av.append(i);} else av.textContent=(acc.name||acc.handle).charAt(0);
@@ -215,7 +198,6 @@ async function loadInstagram(){
       const follow=el('a','btn ig-btn','Follow'); follow.href=profileUrl; follow.target='_blank'; follow.rel='noopener';
       head.append(av,info,follow);
 
-      // latest post
       const post=el('a','ig-card ig-post');
       const L=acc.latest||{};
       post.href=L.url||profileUrl; post.target='_blank'; post.rel='noopener';
@@ -237,12 +219,12 @@ async function loadInstagram(){
 }
 loadInstagram();
 
-/* ====== YouTube (data/youtube.json: latest 3 regular videos, no Shorts) ====== */
+/* ====== YouTube (data/youtube.json) ====== */
 async function loadYouTube(){
   try{
     const data=await (await fetch('data/youtube.json',{cache:'no-store'})).json();
     const vids=(data.videos||[]).slice(0,3);
-    if(!vids.length) return; // keep the fallback playlist embed from index.html
+    if(!vids.length) return;
     const grid=$('#ytGrid'); grid.textContent='';
     vids.forEach(v=>{
       if(!/^[\w-]{11}$/.test(v.id||'')) return;
@@ -256,24 +238,10 @@ async function loadYouTube(){
       if(v.published) item.append(el('small','muted',new Date(v.published).toLocaleDateString(undefined,{dateStyle:'medium'})));
       grid.append(item);
     });
-  }catch(e){/* keep fallback embed */}
+  }catch(e){}
 }
 loadYouTube();
 setInterval(tick,1000); tick();
-
-/* ====== team radio feed ====== */
-let radioIdx = 0;
-function pushRadio(){
-  const ul = $('#chatList');
-  const [who,msg] = RADIO[radioIdx++ % RADIO.length];
-  const li = document.createElement('li');
-  const b = document.createElement('b'); b.textContent = who;
-  li.append(b, document.createTextNode(msg));
-  ul.append(li);
-  while(ul.children.length>12) ul.firstChild.remove();
-}
-for(let i=0;i<8;i++) pushRadio();
-setInterval(pushRadio,2200);
 
 /* ====== racepedia ====== */
 let tier = 'All', q = '';
@@ -380,7 +348,7 @@ $('#vaultCount').textContent=VAULT.length;
 VAULT.forEach((n,i)=>{
   const f=document.createElement('figure');
   const ph=document.createElement('div');ph.className='ph';
-  ph.style.background=`hsl(${(i*37)%360} 55% 42%)`;ph.textContent='#'+pad(i+1);
+  ph.textContent='#'+pad(i+1);
   const c=document.createElement('figcaption');c.textContent=n;
   f.append(ph,c);$('#vaultGrid').append(f);
 });
@@ -411,8 +379,7 @@ const toTop=$('#toTop');
 addEventListener('scroll',()=>toTop.classList.toggle('show',scrollY>600),{passive:true});
 toTop.onclick=()=>scrollTo({top:0});
 
-
-/* ====== Series standings (data/standings.json, written by scripts/update_standings.py) ====== */
+/* ====== Series standings (data/standings.json) ====== */
 let ST = [], stStatus = 'all', stQuery = '';
 function renderStandings(){
   const box = $('#stList'); box.textContent = '';
