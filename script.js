@@ -268,7 +268,7 @@ if(toTop){
   toTop.onclick=()=>scrollTo({top:0});
 }
 
-/* ====== Series Standings (Finished Events + Thumbnails + Top 3 + Flags + N. Surname + Full Standings Link) ====== */
+/* ====== Series Standings (Finished Series + Thumbnails + Series Name + Top 3 + Real Country Flags + N. Surname) ====== */
 let ST = [], stQuery = '';
 
 function formatDriverShort(raw){
@@ -279,29 +279,39 @@ function formatDriverShort(raw){
   return parts[0][0].toUpperCase() + '. ' + parts.slice(1).join(' ');
 }
 
-function countryCodeToFlag(code){
+function normalizeIso2(code){
   const c = String(code || '').replace(/[^A-Za-z]/g, '').toUpperCase();
-  if(c.length !== 2) return '';
-  return String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65, 0x1F1E6 + c.charCodeAt(1) - 65);
+  return c.length === 2 ? c : '';
 }
 
-function getEventTop3(e){
+function buildFlagElement(countryCode, flagEmoji){
+  const wrap = el('span', 'podium-flag');
+  const iso = normalizeIso2(countryCode);
+  if(iso){
+    const img = document.createElement('img');
+    img.src = 'https://flagcdn.com/24x18/' + iso.toLowerCase() + '.png';
+    img.alt = iso;
+    img.width = 20;
+    img.height = 15;
+    img.loading = 'lazy';
+    img.onerror = () => {
+      wrap.textContent = flagEmoji || iso;
+    };
+    wrap.append(img);
+  } else {
+    wrap.textContent = flagEmoji || '🏁';
+  }
+  return wrap;
+}
+
+function getSeriesTop3(e){
   if(Array.isArray(e.top3) && e.top3.length){
     return e.top3.slice(0, 3).map((d, idx) => ({
       pos: d.position || (idx + 1),
-      flag: d.flag || countryCodeToFlag(d.countryCode || d.country),
+      countryCode: d.countryCode || d.country || '',
+      flag: d.flag || '',
       name: d.name ? (d.name.includes('.') ? d.name : formatDriverShort(d.name)) : formatDriverShort(d.fullName),
       points: d.points
-    }));
-  }
-  // Fallback if older tables format exists in standings.json
-  if(Array.isArray(e.tables) && e.tables.length && Array.isArray(e.tables[0].rows)){
-    const rows = e.tables[0].rows.slice(1, 4);
-    return rows.map((r, idx) => ({
-      pos: idx + 1,
-      flag: '',
-      name: formatDriverShort(r[1] || r[0] || ''),
-      points: r[r.length - 1] || ''
     }));
   }
   return [];
@@ -320,40 +330,41 @@ function renderStandings(){
   );
 
   if(!list.length){
-    box.textContent = finished.length ? 'No finished series match your search.' : 'No finished events loaded yet.';
+    box.textContent = finished.length ? 'No finished series match your search.' : 'No finished series loaded yet.';
     return;
   }
 
   list.forEach(e => {
     const card = el('article', 'st-card');
+    const seriesTitle = (e.name && e.name.toUpperCase() !== 'FINISHED') ? e.name : (e.series || 'Series');
+    const standingsHref = e.standingsUrl || e.url || '#';
 
     const thumbLink = el('a', 'st-card-thumb');
-    const standingsHref = e.standingsUrl || (e.id ? `https://paddock.worldsimseries.com/events/${e.id}/standings#/` : e.url);
     thumbLink.href = standingsHref;
     thumbLink.target = '_blank';
     thumbLink.rel = 'noopener';
-    thumbLink.setAttribute('aria-label', 'Open full standings for ' + e.name);
+    thumbLink.setAttribute('aria-label', 'Open full standings for ' + seriesTitle);
     if(e.thumbnail) thumbLink.style.backgroundImage = `url("${e.thumbnail}")`;
 
     const body = el('div', 'st-card-body');
 
     const head = el('div', 'st-card-head');
     const titleWrap = el('div', 'st-card-title');
-    if(e.series) titleWrap.append(el('span', 'st-series', e.series));
-    titleWrap.append(el('h3', null, e.name));
+    titleWrap.append(el('span', 'st-series', 'FINISHED SERIES'));
+    titleWrap.append(el('h3', null, seriesTitle));
     if(e.date) titleWrap.append(el('small', 'muted', e.date));
     head.append(titleWrap);
     body.append(head);
 
-    const top3 = getEventTop3(e);
+    const top3 = getSeriesTop3(e);
     const podium = el('ol', 'st-podium');
     if(top3.length){
       top3.forEach((d, idx) => {
         const li = el('li', 'podium-row p' + (idx + 1));
         const pos = el('span', 'podium-pos', 'P' + (idx + 1));
-        const flag = el('span', 'podium-flag', d.flag || '🏁');
+        const flagEl = buildFlagElement(d.countryCode, d.flag);
         const driver = el('span', 'podium-driver', d.name);
-        li.append(pos, flag, driver);
+        li.append(pos, flagEl, driver);
         if(d.points !== undefined && d.points !== null && d.points !== ''){
           li.append(el('span', 'podium-pts', String(d.points) + ' pts'));
         }
