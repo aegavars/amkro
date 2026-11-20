@@ -3,8 +3,8 @@
 const CONFIG = {
   nextRace: nextThursdayAt(20, 0),
   raceDurationHours: 3,
-  youtubeHandle: 'AMKRacingOrganisation',
   youtubeChannelUrl: 'https://www.youtube.com/@AMKRacingOrganisation',
+  youtubeChannelId: 'UU-6zSmuerT4LvwzCy7MLNFA',
 };
 
 const TIMELINE = [
@@ -126,7 +126,7 @@ async function loadInstagram(){
   });
 }
 
-/* ====== YouTube (Automatic 3-Card Grid via Official YouTube IFrame API) ====== */
+/* ====== YouTube (3-Card Grid via Official YouTube IFrame API + UU Uploads Playlist) ====== */
 function extractYtId(v){
   if(!v) return '';
   if(typeof v === 'string'){
@@ -185,10 +185,13 @@ async function renderYouTubeCards(vids, grid){
   return true;
 }
 
-function discoverPlaylistViaYouTubeApi(channelId){
+function getUploadsFromYouTubeApi(channelId){
   return new Promise(resolve => {
+    if(!channelId || !channelId.startsWith('UC')){ resolve([]); return; }
+    const uploadsPlaylistId = 'UU' + channelId.slice(2);
+
     const holder = document.createElement('div');
-    holder.style.cssText = 'position:fixed;width:1px;height:1px;left:-9999px;top:-9999px;opacity:0;pointer-events:none';
+    holder.style.cssText = 'position:fixed;width:200px;height:200px;left:-9999px;top:0;opacity:0;pointer-events:none';
     const playerEl = document.createElement('div');
     holder.appendChild(playerEl);
     document.body.appendChild(holder);
@@ -197,21 +200,20 @@ function discoverPlaylistViaYouTubeApi(channelId){
     const finish = ids => {
       if(done) return;
       done = true;
-      setTimeout(() => holder.remove(), 200);
+      setTimeout(() => holder.remove(), 300);
       resolve(ids || []);
     };
 
     const timer = setTimeout(() => finish([]), 12000);
 
     const createPlayer = () => {
-      const playerVars = (channelId && channelId.startsWith('UC'))
-        ? { listType: 'playlist', list: 'UU' + channelId.slice(2) }
-        : { listType: 'user_uploads', list: CONFIG.youtubeHandle };
-
       new window.YT.Player(playerEl, {
-        height: '10',
-        width: '10',
-        playerVars,
+        height: '200',
+        width: '200',
+        playerVars: {
+          listType: 'playlist',
+          list: uploadsPlaylistId,
+        },
         events: {
           onReady: ev => {
             try{
@@ -263,9 +265,8 @@ async function loadYouTube(){
 
   let vids = [];
   let channelUrl = CONFIG.youtubeChannelUrl;
-  let channelId = '';
+  let channelId = CONFIG.youtubeChannelId;
 
-  // 1. Check data/youtube.json if present
   try{
     const data = await (await fetch('data/youtube.json',{cache:'no-store'})).json();
     if(data.channelUrl) channelUrl = data.channelUrl;
@@ -278,21 +279,19 @@ async function loadYouTube(){
     subBtn.href = channelUrl.includes('?') ? channelUrl : channelUrl + '?sub_confirmation=1';
   }
 
-  // 2. Discover the 3 latest uploads directly via YouTube's official IFrame API
-  const liveIds = await discoverPlaylistViaYouTubeApi(channelId);
+  const liveIds = await getUploadsFromYouTubeApi(channelId);
   if(liveIds.length){
     const ok = await renderYouTubeCards(liveIds, grid);
     if(ok) return;
   }
 
-  // 3. Fallback to any cached videos in data/youtube.json
   if(vids.length){
     const ok = await renderYouTubeCards(vids, grid);
     if(ok) return;
   }
 
   grid.textContent='';
-  grid.append(el('p','muted','Visit the AMK Racing Organisation YouTube channel to watch the latest uploads.'));
+  grid.append(el('p','muted','Paste your UC... channel ID into CONFIG.youtubeChannelId in script.js to load your 3 latest videos.'));
 }
 
 /* ====== timeline & faq ====== */
