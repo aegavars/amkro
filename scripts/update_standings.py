@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Log into World Sim Series, read AMKRO's Finished Series, and extract series title, thumbnail, Top 3 (with country flags & N. Surname), and full standings URL."""
+"""Log into World Sim Series, read Finished Series from /series-manager#/, open each series' last round standings, and save Top 3 podiums."""
 
 from __future__ import annotations
 
@@ -11,9 +11,8 @@ from pathlib import Path
 from typing import Any
 from playwright.sync_api import sync_playwright
 
-ORG_ID = "2b746de0d67e2930b18aacfa19e07eeb"
 LOGIN_URL = "https://paddock.worldsimseries.com/login"
-ORG_SERIES_URL = f"https://paddock.worldsimseries.com/organizations/{ORG_ID}#/series"
+SERIES_MANAGER_URL = "https://paddock.worldsimseries.com/series-manager#/"
 OUT_PATH = Path(__file__).resolve().parent.parent / "data" / "standings.json"
 
 ALPHA3_TO_2 = {
@@ -44,7 +43,6 @@ def normalize_country_code(raw: str | None) -> str:
     if not raw:
         return ""
     s = str(raw).strip()
-    # Convert regional indicator flag emoji back to 2-letter ISO code if needed
     if len(s) >= 2 and all(0x1F1E6 <= ord(ch) <= 0x1F1FF for ch in s[:2]):
         return chr(ord(s[0]) - 0x1F1E6 + ord("A")) + chr(ord(s[1]) - 0x1F1E6 + ord("A"))
     clean = re.sub(r"[^A-Za-z]", "", s).upper()
@@ -76,7 +74,7 @@ def login_wss(page) -> bool:
     email = os.environ.get("WSS_EMAIL", "").strip()
     password = os.environ.get("WSS_PASSWORD", "").strip()
     if not email or not password:
-        print("WSS_EMAIL or WSS_PASSWORD not set; continuing without login.")
+        print("WSS_EMAIL or WSS_PASSWORD not set.")
         return False
 
     print("Logging into World Sim Series...")
@@ -117,126 +115,74 @@ def login_wss(page) -> bool:
     return True
 
 
-def find_driver_rows(payload: Any) -> list[dict[str, Any]]:
-    if isinstance(payload, list) and payload and isinstance(payload[0], dict):
-        sample = payload[0]
-        if any(k in sample for k in ("driver", "driverName", "fullName", "points", "position", "user")):
-            return payload
-    if isinstance(payload, dict):
-        for v in payload.values():
-            found = find_driver_rows(v)
-            if found:
-                return found
-    return []
-
-
-def collect_finished_series(page) -> list[dict[str, str]]:
-    page.goto(ORG_SERIES_URL, wait_until="networkidle", timeout=45000)
+def collect_finished_series_from_manager(page) -> list[dict[str, str]]:
+    """Open /series-manager#/, scroll all cards, and collect every series under FINISHED SERIES."""
+    page.goto(SERIES_MANAGER_URL, wait_until="networkidle", timeout=45000)
     page.wait_for_timeout(3000)
 
-    # Scroll & click any "Load more" / "Show more" inside the Finished series area
-    for _ in range(10):
+    # Scroll repeatedly to load all Finished Series rows
+    prev_height = 0
+    for _ in range(15):
         page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-        page.wait_for_timeout(700)
-        clicked = page.evaluate(
-            """() => {
-                const btns = Array.from(document.querySelectorAll('button, a'));
-                for (const b of btns) {
-                    const txt = (b.innerText || '').trim().toLowerCase();
-                    if ((txt.includes('load more') || txt.includes('show more') || txt === 'more') && b.offsetParent !== null) {
-                        b.click();
-                        return true;
-                    }
-                }
-                return false;
-            }"""
-        )
-        if not clicked:
+        page.wait_for_timeout(800)
+        curr_height = page.evaluate("document.body.scrollHeight")
+        if curr_height == prev_height:
             break
+        prev_height = curr_height
 
-    series_list = page.evaluate(
+    # Collect cards positioned below the "FINISHED SERIES" header
+    series_items = page.evaluate(
         """() => {
-            const badLabels = new Set([
-                'FINISHED', 'ONGOING', 'DRAFT', 'DRAFTS', 'LIVE', 'UPCOMING',
-                'SERIES', 'STANDINGS', 'RESULTS', 'OVERVIEW', 'AMKRO', 'VIEW', 'OPEN'
-            ]);
-
-            // Find the "Finished" section heading/container on the Series page
-            const allElements = Array.from(document.querySelectorAll('h1, h2, h3, h4, h5, div, section, span'));
-            let finishedRoot = null;
-            for (const el of allElements) {
-                const ownText = Array.from(el.childNodes)
-                    .filter(n => n.nodeType === Node.TEXT_NODE)
-                    .map(n => n.textContent.trim())
-                    .join(' ')
-                    .toLowerCase();
-                if (ownText === 'finished' || ownText === 'finished series') {
-                    // Walk up to the section container holding this heading and its cards
-                    let parent = el.parentElement;
-                    while (parent && parent !== document.body) {
-                        const links = parent.querySelectorAll('a[href*="/series/"], a[href*="/events/"]');
-                        const textLower = (parent.innerText || '').toLowerCase();
-                        // Stop before climbing into a container that also holds Ongoing or Draft
-                        if (links.length > 0 && !textLower.includes('ongoing') && !textLower.includes('draft')) {
-                            finishedRoot = parent;
-                            break;
-                        }
-                        if (links.length > 0 && parent.parentElement && (parent.parentElement.innerText || '').toLowerCase().includes('ongoing')) {
-                            finishedRoot = parent;
-                            break;
-                        }
-                        parent = parent.parentElement;
-                    }
-                    if (finishedRoot) break;
+            const headers = Array.from(document.querySelectorAll('h1, h2, h3, h4, div, span'));
+            let finishedTop = null;
+            for (const el of headers) {
+                const txt = (el.innerText || '').trim().toUpperCase();
+                if (txt === 'FINISHED SERIES') {
+                    const rect = el.getBoundingClientRect();
+                    finishedTop = rect.top + window.scrollY;
+                    break;
                 }
             }
 
-            const scope = finishedRoot || document;
-            const anchors = Array.from(scope.querySelectorAll('a[href*="/series/"], a[href*="/events/"]'));
             const seen = new Set();
             const out = [];
 
+            // Cards in series-manager either use <a href="/series-manager/2690..."> or clickable card containers
+            const anchors = Array.from(document.querySelectorAll('a[href*="/series-manager/"]'));
             for (const a of anchors) {
                 const href = a.getAttribute('href') || '';
-                const m = /\\/(series|events)\\/(\\d+)/.exec(href);
+                const m = /\\/series-manager\\/(\\d+)/.exec(href);
                 if (!m) continue;
-                const kind = m[1];
-                const id = m[2];
-                const key = kind + ':' + id;
-                if (seen.has(key)) continue;
+                const sid = m[1];
+                if (seen.has(sid)) continue;
 
-                const card = a.closest('article, [class*="card"], [class*="series"], [class*="event"], [class*="item"]') || a;
+                const card = a.closest('article, [class*="card"], [class*="series"], [class*="item"]') || a;
+                const cardTop = card.getBoundingClientRect().top + window.scrollY;
                 const cardText = (card.innerText || '').trim();
+                const upper = cardText.toUpperCase();
 
-                // If we fell back to full document, only keep cards marked Finished and NOT Ongoing/Draft
-                if (!finishedRoot) {
-                    const upper = cardText.toUpperCase();
-                    if (!upper.includes('FINISHED') || upper.includes('ONGOING') || upper.includes('DRAFT')) continue;
-                }
+                // Must be in the Finished Series section (below FINISHED SERIES header or marked Finished (X/X))
+                const inFinishedSection = finishedTop !== null ? (cardTop >= finishedTop - 10) : upper.includes('FINISHED (');
+                if (!inFinishedSection) continue;
+                if (upper.includes('IN PROGRESS') || upper.includes('DRAFT (')) continue;
 
-                // Skip any card still showing an incomplete round fraction like 8/12
-                const progMatch = /\\b(\\d{1,2})\\s*\\/\\s*(\\d{1,2})\\b/.exec(cardText);
-                if (progMatch) {
-                    const done = parseInt(progMatch[1], 10);
-                    const total = parseInt(progMatch[2], 10);
-                    if (done < total) continue;
-                }
+                seen.add(sid);
 
-                seen.add(key);
-
-                // Extract actual series title (ignoring status badges and round counters)
                 const lines = cardText
                     .split('\\n')
                     .map(s => s.trim())
-                    .filter(s => s && !badLabels.has(s.toUpperCase()) && !/^\\d+\\s*\\/\\s*\\d+$/.test(s) && !/^\\d+\\s*(rounds?|events?|races?)$/i.test(s));
+                    .filter(s =>
+                        s &&
+                        !s.toUpperCase().startsWith('BY ') &&
+                        !s.toUpperCase().startsWith('FINISHED') &&
+                        s.toUpperCase() !== 'START' &&
+                        s.toUpperCase() !== 'END' &&
+                        !/^\\d{1,2}(st|nd|rd|th)\\s+[A-Za-z]+/i.test(s)
+                    );
 
-                const heading = card.querySelector('h1, h2, h3, h4, [class*="title"], [class*="name"]');
-                let title = heading ? (heading.innerText || '').trim() : '';
-                if (!title || badLabels.has(title.toUpperCase())) {
-                    title = lines[0] || ('Series ' + id);
-                }
+                const titleEl = card.querySelector('h1, h2, h3, h4, [class*="title"], [class*="name"]');
+                const name = (titleEl ? titleEl.innerText : (lines[0] || ('Series ' + sid))).trim();
 
-                // Extract thumbnail image or CSS background-image
                 let thumb = '';
                 const img = card.querySelector('img');
                 if (img && img.src) {
@@ -252,172 +198,189 @@ def collect_finished_series(page) -> list[dict[str, str]]:
                     }
                 }
 
+                // Extract date range if visible
+                const dateLines = cardText.split('\\n').map(s => s.trim()).filter(s => /^\\d{1,2}(st|nd|rd|th)\\s+[A-Za-z]+/i.test(s));
+                const dateLabel = dateLines.length ? dateLines[dateLines.length - 1] : '';
+
                 out.push({
-                    kind,
-                    id,
-                    name: title,
+                    seriesId: sid,
+                    name,
                     thumbnail: thumb,
-                    href: href.startsWith('http') ? href : ('https://paddock.worldsimseries.com' + (href.startsWith('/') ? '' : '/') + href)
+                    date: dateLabel
                 });
             }
             return out;
         }"""
     )
-    return series_list
+    return series_items
 
 
-def extract_top3_and_standings_url(page, item: dict[str, str]) -> tuple[list[dict[str, Any]], str]:
-    kind = item["kind"]
-    sid = item["id"]
+def find_last_event_id_for_series(page, series_id: str) -> str:
+    """Open /series-manager/<series_id>#/events, expand the last round, and extract its /events/<event_id> link."""
+    events_tab_url = f"https://paddock.worldsimseries.com/series-manager/{series_id}#/events"
+    page.goto(events_tab_url, wait_until="networkidle", timeout=35000)
+    page.wait_for_timeout(2000)
 
-    # Candidate standings URLs for both /series/<id> and /events/<id>
-    if kind == "series":
-        candidate_urls = [
-            f"https://paddock.worldsimseries.com/series/{sid}/standings#/",
-            f"https://paddock.worldsimseries.com/series/{sid}#/",
-        ]
-    else:
-        candidate_urls = [
-            f"https://paddock.worldsimseries.com/events/{sid}/standings#/",
-            f"https://paddock.worldsimseries.com/events/{sid}#/",
-        ]
+    # Click the last ROUND #N accordion header if any exist
+    try:
+        rounds = page.locator('[class*="round"], [class*="accordion"], div, button').filter(has_text=re.compile(r"^ROUND\s*#\d+", re.I))
+        count = rounds.count()
+        if count > 0:
+            rounds.nth(count - 1).click()
+            page.wait_for_timeout(1500)
+    except Exception:
+        pass
 
-    final_standings_url = candidate_urls[0]
+    # Look for any /events/<id> link rendered inside the expanded round card
+    event_id = page.evaluate(
+        """() => {
+            const links = Array.from(document.querySelectorAll('a[href*="/events/"]'));
+            const ids = [];
+            for (const a of links) {
+                const m = /\\/events\\/(\\d+)/.exec(a.getAttribute('href') || '');
+                if (m) ids.push(m[1]);
+            }
+            return ids.length ? ids[ids.length - 1] : '';
+        }"""
+    )
+    return event_id
 
-    for target_url in candidate_urls:
-        captured_json: list[Any] = []
 
-        def on_response(resp):
-            try:
-                url = resp.url.lower()
-                if resp.status == 200 and any(
-                    k in url for k in ("standing", "result", "classification", "leaderboard", "driver", "series")
-                ):
-                    if "json" in resp.headers.get("content-type", ""):
-                        captured_json.append(resp.json())
-            except Exception:
-                pass
+def find_driver_rows(payload: Any) -> list[dict[str, Any]]:
+    if isinstance(payload, list) and payload and isinstance(payload[0], dict):
+        sample = payload[0]
+        if any(k in sample for k in ("driver", "driverName", "fullName", "points", "position", "user")):
+            return payload
+    if isinstance(payload, dict):
+        for v in payload.values():
+            found = find_driver_rows(v)
+            if found:
+                return found
+    return []
 
-        page.on("response", on_response)
+
+def extract_top3_from_event_standings(page, event_id: str) -> list[dict[str, Any]]:
+    """Open /events/<event_id>/standings#/ and extract Top 3 driver standings (Pos, Flag, Name, Points)."""
+    standings_url = f"https://paddock.worldsimseries.com/events/{event_id}/standings#/"
+    captured_json: list[Any] = []
+
+    def on_response(resp):
         try:
-            page.goto(target_url, wait_until="networkidle", timeout=35000)
-            page.wait_for_timeout(2000)
-
-            # If we landed on the series overview page, click the "Standings" tab/link if present
-            if "/standings" not in page.url.lower():
-                st_link = page.locator('a[href*="/standings"], button:has-text("Standings"), a:has-text("Standings")').first
-                if st_link.is_visible(timeout=2000):
-                    st_link.click()
-                    page.wait_for_load_state("networkidle", timeout=20000)
-                    page.wait_for_timeout(2000)
+            url = resp.url.lower()
+            if resp.status == 200 and any(k in url for k in ("standing", "classification", "leaderboard", "driver", "point")):
+                if "json" in resp.headers.get("content-type", ""):
+                    captured_json.append(resp.json())
         except Exception:
             pass
-        finally:
-            page.remove_listener("response", on_response)
 
-        if "/standings" in page.url.lower():
-            final_standings_url = page.url
+    page.on("response", on_response)
+    try:
+        page.goto(standings_url, wait_until="networkidle", timeout=35000)
+        page.wait_for_timeout(2500)
+    except Exception:
+        pass
+    finally:
+        page.remove_listener("response", on_response)
 
-        # 1. Parse captured API JSON responses
-        for blob in captured_json:
-            rows = find_driver_rows(blob)
-            if rows:
-                top3 = []
-                for idx, r in enumerate(rows[:3], start=1):
-                    driver = r.get("driver") if isinstance(r.get("driver"), dict) else {}
-                    user = r.get("user") if isinstance(r.get("user"), dict) else {}
-                    raw_name = (
-                        r.get("driverName") or r.get("fullName") or r.get("name")
-                        or driver.get("fullName") or driver.get("name")
-                        or f"{driver.get('firstName', '')} {driver.get('lastName', '')}".strip()
-                        or f"{user.get('firstName', '')} {user.get('lastName', '')}".strip()
-                        or user.get("name") or ""
-                    )
-                    raw_cc = (
-                        r.get("countryCode") or r.get("country") or r.get("nationality")
-                        or driver.get("countryCode") or driver.get("country") or driver.get("nationality")
-                        or user.get("countryCode") or user.get("country") or user.get("nationality") or ""
-                    )
-                    cc = normalize_country_code(raw_cc)
-                    pts = r.get("points") if r.get("points") is not None else r.get("score")
-                    if raw_name:
-                        top3.append({
-                            "position": idx,
-                            "name": format_short_name(raw_name),
-                            "fullName": raw_name.strip(),
-                            "countryCode": cc,
-                            "flag": country_to_flag(cc),
-                            "points": pts,
-                        })
-                if top3:
-                    return top3, final_standings_url
+    # 1. Try captured standings API JSON first
+    for blob in captured_json:
+        rows = find_driver_rows(blob)
+        if rows:
+            top3 = []
+            for idx, r in enumerate(rows[:3], start=1):
+                driver = r.get("driver") if isinstance(r.get("driver"), dict) else {}
+                user = r.get("user") if isinstance(r.get("user"), dict) else {}
+                raw_name = (
+                    r.get("driverName") or r.get("fullName") or r.get("name")
+                    or driver.get("fullName") or driver.get("name")
+                    or f"{driver.get('firstName', '')} {driver.get('lastName', '')}".strip()
+                    or f"{user.get('firstName', '')} {user.get('lastName', '')}".strip()
+                    or user.get("name") or ""
+                )
+                raw_cc = (
+                    r.get("countryCode") or r.get("country") or r.get("nationality")
+                    or driver.get("countryCode") or driver.get("country") or driver.get("nationality")
+                    or user.get("countryCode") or user.get("country") or user.get("nationality") or ""
+                )
+                cc = normalize_country_code(raw_cc)
+                pts = r.get("points") if r.get("points") is not None else r.get("score")
+                if raw_name:
+                    top3.append({
+                        "position": idx,
+                        "name": format_short_name(raw_name),
+                        "fullName": raw_name.strip(),
+                        "countryCode": cc,
+                        "flag": country_to_flag(cc),
+                        "points": pts,
+                    })
+            if top3:
+                return top3
 
-        # 2. Fallback: parse rendered DOM rows + flag elements on the Standings page
-        dom_rows = page.evaluate(
-            """() => {
-                const out = [];
-                const rowEls = Array.from(document.querySelectorAll('table tbody tr, [class*="standing"] [class*="row"], [class*="table"] [class*="row"]'));
-                for (const row of rowEls) {
-                    if (out.length >= 3) break;
-                    const text = (row.innerText || '').trim();
-                    if (!text) continue;
+    # 2. Parse rendered DRIVER STANDINGS table rows (Pos | Driver (with flag) | Points)
+    dom_rows = page.evaluate(
+        """() => {
+            const out = [];
+            const rowEls = Array.from(document.querySelectorAll('table tbody tr, [class*="standing"] [class*="row"], [class*="table"] [class*="row"]'));
+            for (const row of rowEls) {
+                if (out.length >= 3) break;
+                const cells = Array.from(row.querySelectorAll('td, [class*="cell"], [class*="col"]'))
+                    .map(c => (c.innerText || '').trim())
+                    .filter(Boolean);
+                if (cells.length < 2) continue;
 
-                    let country = '';
-                    const candidates = Array.from(row.querySelectorAll('img, span, i, svg, [class*="flag"], [class*="fi-"], [data-country]'));
-                    for (const el of candidates) {
-                        const cls = (typeof el.className === 'string' ? el.className : (el.className && el.className.baseVal) || '');
-                        const cm = /(?:^|\\s|-)fi-([a-zA-Z]{2})(?:\\s|$|-)|flag-icon-([a-zA-Z]{2})(?:\\s|$)|flag-([a-zA-Z]{2})(?:\\s|$)/i.exec(cls);
-                        if (cm) {
-                            country = cm[1] || cm[2] || cm[3];
-                            break;
-                        }
-                        const attr = el.getAttribute('data-country') || el.getAttribute('data-code') || el.getAttribute('alt') || el.getAttribute('title') || el.getAttribute('src') || '';
-                        const um = /(?:flags?\\/|\\/)([a-zA-Z]{2})\\.(svg|png|webp|jpg)/i.exec(attr);
-                        if (um) {
-                            country = um[1];
-                            break;
-                        }
-                        if (/^[a-zA-Z]{2,3}$/.test(attr.trim())) {
-                            country = attr.trim();
-                            break;
-                        }
+                // Extract country flag from <img>, <span class="fi fi-de">, or data-country inside the row
+                let country = '';
+                const flagCandidates = Array.from(row.querySelectorAll('img, span, i, svg, [class*="flag"], [class*="fi-"], [data-country]'));
+                for (const el of flagCandidates) {
+                    const cls = (typeof el.className === 'string' ? el.className : (el.className && el.className.baseVal) || '');
+                    const cm = /(?:^|\\s|-)fi-([a-zA-Z]{2})(?:\\s|$|-)|flag-icon-([a-zA-Z]{2})(?:\\s|$)|flag-([a-zA-Z]{2})(?:\\s|$)/i.exec(cls);
+                    if (cm) {
+                        country = cm[1] || cm[2] || cm[3];
+                        break;
                     }
-
-                    const links = Array.from(row.querySelectorAll('a')).map(a => a.innerText.trim()).filter(Boolean);
-                    const cells = Array.from(row.querySelectorAll('td, [class*="cell"], [class*="col"]')).map(c => c.innerText.trim()).filter(Boolean);
-                    out.push({ text, country, links, cells });
+                    const attr = el.getAttribute('data-country') || el.getAttribute('alt') || el.getAttribute('title') || el.getAttribute('src') || '';
+                    const um = /(?:flags?\\/|\\/)([a-zA-Z]{2})\\.(svg|png|webp|jpg)/i.exec(attr);
+                    if (um) {
+                        country = um[1];
+                        break;
+                    }
+                    if (/^[a-zA-Z]{2,3}$/.test(attr.trim())) {
+                        country = attr.trim();
+                        break;
+                    }
                 }
-                return out;
-            }"""
-        )
 
-        top3 = []
-        for idx, r in enumerate(dom_rows[:3], start=1):
-            raw_name = ""
-            for candidate in (r.get("links") or []) + (r.get("cells") or []):
-                cleaned = re.sub(r"^\d+\.?\s*", "", candidate).strip()
-                if len(cleaned) >= 3 and re.search(r"[A-Za-z]{2,}", cleaned) and not cleaned.isdigit():
-                    raw_name = cleaned
-                    break
-            if not raw_name:
-                for ln in [x.strip() for x in r.get("text", "").splitlines() if x.strip()]:
-                    if len(ln) >= 3 and re.search(r"[A-Za-z]{2,}", ln) and not ln.isdigit():
-                        raw_name = ln
-                        break
-            if raw_name:
-                cc = normalize_country_code(r.get("country"))
-                top3.append({
-                    "position": idx,
-                    "name": format_short_name(raw_name),
-                    "fullName": raw_name,
-                    "countryCode": cc,
-                    "flag": country_to_flag(cc),
-                    "points": None,
-                })
-        if top3:
-            return top3, final_standings_url
+                out.push({ cells, country });
+            }
+            return out;
+        }"""
+    )
 
-    return [], final_standings_url
+    top3 = []
+    for idx, r in enumerate(dom_rows[:3], start=1):
+        cells = r.get("cells") or []
+        raw_name = ""
+        pts = None
+        for c in cells:
+            if c.isdigit() and not raw_name:
+                continue
+            if not raw_name and re.search(r"[A-Za-z]{2,}", c):
+                raw_name = c
+                continue
+            if raw_name and pts is None and re.match(r"^\d+(\.\d+)?$", c):
+                pts = int(float(c)) if float(c).is_integer() else float(c)
+                break
+        if raw_name:
+            cc = normalize_country_code(r.get("country"))
+            top3.append({
+                "position": idx,
+                "name": format_short_name(raw_name),
+                "fullName": raw_name,
+                "countryCode": cc,
+                "flag": country_to_flag(cc),
+                "points": pts,
+            })
+    return top3
 
 
 def main() -> None:
@@ -430,34 +393,39 @@ def main() -> None:
 
         login_wss(page)
 
-        finished_series = collect_finished_series(page)
-        print(f"Found {len(finished_series)} finished series on Series tab.")
+        finished_series = collect_finished_series_from_manager(page)
+        print(f"Found {len(finished_series)} finished series in series-manager.")
 
-        seen_titles: set[str] = set()
-        for item in finished_series:
-            title_key = item["name"].strip().lower()
-            if title_key in seen_titles:
+        for s in finished_series:
+            sid = s["seriesId"]
+            event_id = find_last_event_id_for_series(page, sid)
+            if not event_id:
+                print(f"Skipping {s['name']} (ID {sid}): no round event ID found.")
                 continue
-            seen_titles.add(title_key)
 
-            top3, standings_url = extract_top3_and_standings_url(page, item)
+            top3 = extract_top3_from_event_standings(page, event_id)
+            standings_url = f"https://paddock.worldsimseries.com/events/{event_id}/standings#/"
+
             series_out.append({
-                "id": item["id"],
-                "name": item["name"],
-                "series": item["name"],
+                "id": event_id,
+                "seriesId": sid,
+                "name": s["name"],
+                "series": s["name"],
                 "status": "finished",
-                "thumbnail": item["thumbnail"],
-                "url": item["href"],
+                "date": s["date"],
+                "thumbnail": s["thumbnail"],
+                "url": f"https://paddock.worldsimseries.com/events/{event_id}#/",
                 "standingsUrl": standings_url,
                 "top3": top3,
             })
+            print(f"Loaded {s['name']} -> event {event_id} ({len(top3)} podium entries)")
 
         browser.close()
 
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     payload = {
         "updated": datetime.now(timezone.utc).isoformat(),
-        "organizationUrl": ORG_SERIES_URL,
+        "organizationUrl": SERIES_MANAGER_URL,
         "events": series_out,
     }
     OUT_PATH.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
