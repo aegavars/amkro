@@ -126,7 +126,7 @@ async function loadInstagram(){
   });
 }
 
-/* ====== YouTube (3-Card Grid — Direct Browser Fetch, Zero GitHub Workflows) ====== */
+/* ====== YouTube (3-Card Grid) ====== */
 function extractYtId(v){
   if(!v) return '';
   if(typeof v === 'string'){
@@ -158,12 +158,10 @@ function parseYouTubeXml(xmlText){
 async function fetchLiveYouTubeFeed(channelId){
   if(!channelId || !channelId.startsWith('UC')) return [];
   const feedUrl = 'https://www.youtube.com/feeds/videos.xml?channel_id=' + encodeURIComponent(channelId);
-
   const endpoints = [
     async () => {
       const r = await fetch('https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(feedUrl));
-      const txt = await r.text();
-      const list = parseYouTubeXml(txt);
+      const list = parseYouTubeXml(await r.text());
       if(!list.length) throw new Error('empty');
       return list;
     },
@@ -176,16 +174,8 @@ async function fetchLiveYouTubeFeed(channelId){
         title: it.title,
         published: it.pubDate
       })).filter(v => v.id);
-    },
-    async () => {
-      const r = await fetch('https://thingproxy.freeboard.io/fetch/' + feedUrl);
-      const txt = await r.text();
-      const list = parseYouTubeXml(txt);
-      if(!list.length) throw new Error('empty');
-      return list;
     }
   ];
-
   for(const fn of endpoints){
     try{
       const res = await fn();
@@ -229,7 +219,6 @@ async function loadYouTube(){
   let channelUrl = CONFIG.youtubeChannelUrl;
   let channelId = CONFIG.youtubeChannelId;
 
-  // 1. Check data/youtube.json for cached videos
   try{
     const data = await (await fetch('data/youtube.json',{cache:'no-store'})).json();
     if(data.channelUrl) channelUrl = data.channelUrl;
@@ -242,7 +231,6 @@ async function loadYouTube(){
     subBtn.href = channelUrl.includes('?') ? channelUrl : channelUrl + '?sub_confirmation=1';
   }
 
-  // 2. Fetch live 3 latest uploads directly in browser
   const liveVids = await fetchLiveYouTubeFeed(channelId);
   if(liveVids.length) vids = liveVids;
 
@@ -280,54 +268,137 @@ if(toTop){
   toTop.onclick=()=>scrollTo({top:0});
 }
 
-/* ====== Series standings (data/standings.json) ====== */
-let ST = [], stStatus = 'all', stQuery = '';
+/* ====== Series Standings (Finished Events + Thumbnails + Top 3 + Flags + N. Surname + Full Standings Link) ====== */
+let ST = [], stQuery = '';
+
+function formatDriverShort(raw){
+  const clean = String(raw || '').trim().replace(/\s+/g, ' ');
+  if(!clean) return 'Unknown Driver';
+  const parts = clean.split(' ');
+  if(parts.length === 1) return parts[0];
+  return parts[0][0].toUpperCase() + '. ' + parts.slice(1).join(' ');
+}
+
+function countryCodeToFlag(code){
+  const c = String(code || '').replace(/[^A-Za-z]/g, '').toUpperCase();
+  if(c.length !== 2) return '';
+  return String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65, 0x1F1E6 + c.charCodeAt(1) - 65);
+}
+
+function getEventTop3(e){
+  if(Array.isArray(e.top3) && e.top3.length){
+    return e.top3.slice(0, 3).map((d, idx) => ({
+      pos: d.position || (idx + 1),
+      flag: d.flag || countryCodeToFlag(d.countryCode || d.country),
+      name: d.name ? (d.name.includes('.') ? d.name : formatDriverShort(d.name)) : formatDriverShort(d.fullName),
+      points: d.points
+    }));
+  }
+  // Fallback if older tables format exists in standings.json
+  if(Array.isArray(e.tables) && e.tables.length && Array.isArray(e.tables[0].rows)){
+    const rows = e.tables[0].rows.slice(1, 4);
+    return rows.map((r, idx) => ({
+      pos: idx + 1,
+      flag: '',
+      name: formatDriverShort(r[1] || r[0] || ''),
+      points: r[r.length - 1] || ''
+    }));
+  }
+  return [];
+}
+
 function renderStandings(){
-  const box = $('#stList'); if(!box) return; box.textContent = '';
-  const list = ST.filter(e => (stStatus==='all' || e.status===stStatus) &&
-                              (e.name+' '+(e.series||'')).toLowerCase().includes(stQuery));
-  if(!list.length){ box.textContent = ST.length ? 'No series match your search.' : 'No events loaded yet.'; return; }
-  list.forEach(e=>{
-    const d = el('details','st');
-    const sum = el('summary');
-    const th = el('div','st-thumb'); if(e.thumbnail) th.style.backgroundImage = `url("${e.thumbnail}")`;
-    const nm = el('div','st-name', e.name); if(e.date) nm.append(el('small',null,e.date));
-    const tag = el('span','tag'+(e.status==='finished'?' off':''), e.status==='finished'?'Finished':'Current');
-    sum.append(th,nm,tag);
-    const body = el('div','st-body');
-    const links = el('div','cta');
-    const a = el('a','btn primary','Results & standings →'); a.href=e.standingsUrl||e.url; a.target='_blank'; a.rel='noopener';
-    const b = el('a','btn','Event page'); b.href=e.url; b.target='_blank'; b.rel='noopener';
-    links.append(a,b); body.append(links);
-    (e.tables||[]).forEach(t=>{
-      if(t.title) body.append(el('h4',null,t.title));
-      const wrap = el('div','st-scroll'); const tb = el('table');
-      t.rows.forEach((r,i)=>{
-        const tr = el('tr');
-        r.forEach(c=>tr.append(el(i===0?'th':'td',null,c)));
-        tb.append(tr);
+  const box = $('#stList');
+  if(!box) return;
+  box.textContent = '';
+
+  const finished = ST.filter(e => !e.status || e.status === 'finished');
+  const list = finished.filter(e =>
+    (e.name + ' ' + (e.series || '') + ' ' + (e.top3 || []).map(d => d.name).join(' '))
+      .toLowerCase()
+      .includes(stQuery)
+  );
+
+  if(!list.length){
+    box.textContent = finished.length ? 'No finished series match your search.' : 'No finished events loaded yet.';
+    return;
+  }
+
+  list.forEach(e => {
+    const card = el('article', 'st-card');
+
+    const thumbLink = el('a', 'st-card-thumb');
+    const standingsHref = e.standingsUrl || (e.id ? `https://paddock.worldsimseries.com/events/${e.id}/standings#/` : e.url);
+    thumbLink.href = standingsHref;
+    thumbLink.target = '_blank';
+    thumbLink.rel = 'noopener';
+    thumbLink.setAttribute('aria-label', 'Open full standings for ' + e.name);
+    if(e.thumbnail) thumbLink.style.backgroundImage = `url("${e.thumbnail}")`;
+
+    const body = el('div', 'st-card-body');
+
+    const head = el('div', 'st-card-head');
+    const titleWrap = el('div', 'st-card-title');
+    if(e.series) titleWrap.append(el('span', 'st-series', e.series));
+    titleWrap.append(el('h3', null, e.name));
+    if(e.date) titleWrap.append(el('small', 'muted', e.date));
+    head.append(titleWrap);
+    body.append(head);
+
+    const top3 = getEventTop3(e);
+    const podium = el('ol', 'st-podium');
+    if(top3.length){
+      top3.forEach((d, idx) => {
+        const li = el('li', 'podium-row p' + (idx + 1));
+        const pos = el('span', 'podium-pos', 'P' + (idx + 1));
+        const flag = el('span', 'podium-flag', d.flag || '🏁');
+        const driver = el('span', 'podium-driver', d.name);
+        li.append(pos, flag, driver);
+        if(d.points !== undefined && d.points !== null && d.points !== ''){
+          li.append(el('span', 'podium-pts', String(d.points) + ' pts'));
+        }
+        podium.append(li);
       });
-      wrap.append(tb); body.append(wrap);
-    });
-    if(!(e.tables||[]).length) body.append(e.text ? el('pre',null,e.text) : el('p','muted','Standings are not available yet. Use the button above.'));
-    d.append(sum,body); box.append(d);
+    } else {
+      const empty = el('li', 'podium-row');
+      empty.append(el('span', 'muted', 'Podium results available on full standings page.'));
+      podium.append(empty);
+    }
+    body.append(podium);
+
+    const actions = el('div', 'cta');
+    const fullBtn = el('a', 'btn primary', 'Full standings →');
+    fullBtn.href = standingsHref;
+    fullBtn.target = '_blank';
+    fullBtn.rel = 'noopener';
+    actions.append(fullBtn);
+    body.append(actions);
+
+    card.append(thumbLink, body);
+    box.append(card);
   });
 }
-function renderStChips(){
-  const c = $('#stChips'); if(!c) return; c.textContent = '';
-  [['all','All'],['current','Current'],['finished','Finished']].forEach(([k,l])=>{
-    const b = el('button','chip'+(stStatus===k?' on':''),l);
-    b.onclick = ()=>{stStatus=k; renderStChips(); renderStandings();}; c.append(b);
+
+if($('#stSearch')){
+  $('#stSearch').addEventListener('input', e => {
+    stQuery = e.target.value.trim().toLowerCase();
+    renderStandings();
   });
 }
-if($('#stSearch')) $('#stSearch').addEventListener('input', e=>{stQuery = e.target.value.trim().toLowerCase(); renderStandings();});
+
 async function loadStandings(){
+  const chips = $('#stChips');
+  if(chips) chips.style.display = 'none';
   try{
-    const data = await (await fetch('data/standings.json',{cache:'no-store'})).json();
+    const data = await (await fetch('data/standings.json', {cache: 'no-store'})).json();
     ST = data.events || [];
-    if(data.updated && $('#stUpdated')) $('#stUpdated').textContent = 'Updated ' + new Date(data.updated).toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'}) + '.';
-  }catch(e){ ST = []; }
-  renderStChips(); renderStandings();
+    if(data.updated && $('#stUpdated')){
+      $('#stUpdated').textContent = 'Updated ' + new Date(data.updated).toLocaleString(undefined, {dateStyle: 'medium', timeStyle: 'short'}) + '.';
+    }
+  }catch(e){
+    ST = [];
+  }
+  renderStandings();
 }
 
 /* ====== Initialize feeds ====== */
