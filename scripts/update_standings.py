@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Log into World Sim Series, read Finished Series from /series-manager#/, open each series' last round standings, and save Top 3 podiums."""
+"""Log into World Sim Series, paginate through all Finished Series in /series-manager#/, open each series' last round standings, and save Top 3 podiums."""
 
 from __future__ import annotations
 
@@ -115,23 +115,9 @@ def login_wss(page) -> bool:
     return True
 
 
-def collect_finished_series_from_manager(page) -> list[dict[str, str]]:
-    """Open /series-manager#/, scroll all cards, and collect every series under FINISHED SERIES."""
-    page.goto(SERIES_MANAGER_URL, wait_until="networkidle", timeout=45000)
-    page.wait_for_timeout(3000)
-
-    # Scroll repeatedly to load all Finished Series rows
-    prev_height = 0
-    for _ in range(15):
-        page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-        page.wait_for_timeout(800)
-        curr_height = page.evaluate("document.body.scrollHeight")
-        if curr_height == prev_height:
-            break
-        prev_height = curr_height
-
-    # Collect cards positioned below the "FINISHED SERIES" header
-    series_items = page.evaluate(
+def scrape_visible_finished_series(page) -> list[dict[str, str]]:
+    """Extract all Finished Series cards visible on the current page of /series-manager#/."""
+    return page.evaluate(
         """() => {
             const headers = Array.from(document.querySelectorAll('h1, h2, h3, h4, div, span'));
             let finishedTop = null;
@@ -146,8 +132,6 @@ def collect_finished_series_from_manager(page) -> list[dict[str, str]]:
 
             const seen = new Set();
             const out = [];
-
-            // Cards in series-manager either use <a href="/series-manager/2690..."> or clickable card containers
             const anchors = Array.from(document.querySelectorAll('a[href*="/series-manager/"]'));
             for (const a of anchors) {
                 const href = a.getAttribute('href') || '';
@@ -161,7 +145,6 @@ def collect_finished_series_from_manager(page) -> list[dict[str, str]]:
                 const cardText = (card.innerText || '').trim();
                 const upper = cardText.toUpperCase();
 
-                // Must be in the Finished Series section (below FINISHED SERIES header or marked Finished (X/X))
                 const inFinishedSection = finishedTop !== null ? (cardTop >= finishedTop - 10) : upper.includes('FINISHED (');
                 if (!inFinishedSection) continue;
                 if (upper.includes('IN PROGRESS') || upper.includes('DRAFT (')) continue;
@@ -198,7 +181,6 @@ def collect_finished_series_from_manager(page) -> list[dict[str, str]]:
                     }
                 }
 
-                // Extract date range if visible
                 const dateLines = cardText.split('\\n').map(s => s.trim()).filter(s => /^\\d{1,2}(st|nd|rd|th)\\s+[A-Za-z]+/i.test(s));
                 const dateLabel = dateLines.length ? dateLines[dateLines.length - 1] : '';
 
@@ -212,38 +194,145 @@ def collect_finished_series_from_manager(page) -> list[dict[str, str]]:
             return out;
         }"""
     )
-    return series_items
+
+
+def collect_finished_series_from_manager(page) -> list[dict[str, str]]:
+    """Open /series-manager#/ and paginate through every page (1, 2, 3, 4...) of FINISHED SERIES."""
+    page.goto(SERIES_MANAGER_URL, wait_until="networkidle", timeout=45000)
+    page.wait_for_timeout(3000)
+
+    all_series: list[dict[str, str]] = []
+    seen_ids: set[str] = set()
+
+    for page_num in range(1, 30):
+        page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+        page.wait_for_timeout(1000)
+
+        batch = scrape_visible_finished_series(page)
+        new_count = 0
+        for item in batch:
+            sid = item["seriesId"]
+            if sid not in seen_ids:
+                seen_ids.add(sid)
+                all_series.append(item)
+                new_count += 1
+
+        print(f"Finished Series page {page_num}: +{new_count} new series (total {len(all_series)})")
+        if new_count == 0 and page_num > 1:
+            break
+
+        # Click the next-page control ('›', '>', or the next numbered page button) at the bottom
+        advanced = page.evaluate(
+            """(nextNum) => {
+                const candidates = Array.from(document.querySelectorAll('a, button, li'));
+                // First try clicking the explicit next page number (e.g. "2", "3", "4")
+                for (const el of candidates) {
+                    const txt = (el.innerText || '').trim();
+                    if (txt === String(nextNum) && el.offsetParent !== null) {
+                        const cls = (el.className || '').toLowerCase();
+                        if (!cls.includes('disabled') && !cls.includes('active')) {
+                            el.click();
+                            return true;
+                        }
+                    }
+                }
+                // Fallback: click the single-next chevron '›' or '>'
+                for (const el of candidates) {
+                    const txt = (el.innerText || '').trim();
+                    if ((txt === '›' || txt === '>') && el.offsetParent !== null) {
+                        const cls = (el.className || '').toLowerCase();
+                        const parentCls = (el.parentElement && el.parentElement.className || '').toLowerCase();
+                        if (!cls.includes('disabled') && !parentCls.includes('disabled') && !el.hasAttribute('disabled')) {
+                            el.click();
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }""",
+            page_num + 1,
+        )
+
+        if not advanced:
+            break
+
+        try:
+            page.wait_for_load_state("networkidle", timeout=15000)
+        except Exception:
+            pass
+        page.wait_for_timeout(1500)
+
+    return all_series
+
+
+def collect_ids_from_json(obj: Any, found: list[str]) -> None:
+    if isinstance(obj, dict):
+        if "id" in obj and any(k in obj for k in ("startDate", "startsAt", "endDate", "track", "trackId", "round", "eventId")):
+            val = str(obj["id"])
+            if val.isdigit() and len(val) >= 5:
+                found.append(val)
+        if "eventId" in obj and str(obj["eventId"]).isdigit():
+            found.append(str(obj["eventId"]))
+        for v in obj.values():
+            collect_ids_from_json(v, found)
+    elif isinstance(obj, list):
+        for item in obj:
+            collect_ids_from_json(item, found)
 
 
 def find_last_event_id_for_series(page, series_id: str) -> str:
-    """Open /series-manager/<series_id>#/events, expand the last round, and extract its /events/<event_id> link."""
+    """Open /series-manager/<series_id>#/events and extract the last round's event ID via XHR or clicking the round card."""
     events_tab_url = f"https://paddock.worldsimseries.com/series-manager/{series_id}#/events"
-    page.goto(events_tab_url, wait_until="networkidle", timeout=35000)
-    page.wait_for_timeout(2000)
+    captured_event_ids: list[str] = []
 
-    # Click the last ROUND #N accordion header if any exist
+    def on_response(resp):
+        try:
+            if resp.status == 200 and "json" in resp.headers.get("content-type", ""):
+                collect_ids_from_json(resp.json(), captured_event_ids)
+        except Exception:
+            pass
+
+    page.on("response", on_response)
     try:
-        rounds = page.locator('[class*="round"], [class*="accordion"], div, button').filter(has_text=re.compile(r"^ROUND\s*#\d+", re.I))
-        count = rounds.count()
-        if count > 0:
-            rounds.nth(count - 1).click()
+        page.goto(events_tab_url, wait_until="networkidle", timeout=35000)
+        page.wait_for_timeout(2000)
+    finally:
+        page.remove_listener("response", on_response)
+
+    if captured_event_ids:
+        unique_ids = list(dict.fromkeys(captured_event_ids))
+        return unique_ids[-1]
+
+    try:
+        round_bars = page.locator('text=/^ROUND\\s*#\\d+/i')
+        cnt = round_bars.count()
+        if cnt > 0:
+            round_bars.nth(cnt - 1).click()
             page.wait_for_timeout(1500)
+
+        eid = page.evaluate(
+            """() => {
+                const links = Array.from(document.querySelectorAll('a[href*="/events/"]'));
+                const ids = links
+                    .map(a => (/\\/events\\/(\\d+)/.exec(a.getAttribute('href') || '') || [])[1])
+                    .filter(Boolean);
+                return ids.length ? ids[ids.length - 1] : '';
+            }"""
+        )
+        if eid:
+            return eid
+
+        past_card = page.locator('text=/BY AMK RACING ORGANIZATION/i').last
+        if past_card.is_visible(timeout=2000):
+            past_card.click()
+            page.wait_for_url(re.compile(r"/events/\d+"), timeout=15000)
+            m = re.search(r"/events/(\d+)", page.url)
+            if m:
+                return m.group(1)
     except Exception:
         pass
 
-    # Look for any /events/<id> link rendered inside the expanded round card
-    event_id = page.evaluate(
-        """() => {
-            const links = Array.from(document.querySelectorAll('a[href*="/events/"]'));
-            const ids = [];
-            for (const a of links) {
-                const m = /\\/events\\/(\\d+)/.exec(a.getAttribute('href') || '');
-                if (m) ids.push(m[1]);
-            }
-            return ids.length ? ids[ids.length - 1] : '';
-        }"""
-    )
-    return event_id
+    return ""
 
 
 def find_driver_rows(payload: Any) -> list[dict[str, Any]]:
@@ -282,7 +371,6 @@ def extract_top3_from_event_standings(page, event_id: str) -> list[dict[str, Any
     finally:
         page.remove_listener("response", on_response)
 
-    # 1. Try captured standings API JSON first
     for blob in captured_json:
         rows = find_driver_rows(blob)
         if rows:
@@ -316,7 +404,6 @@ def extract_top3_from_event_standings(page, event_id: str) -> list[dict[str, Any
             if top3:
                 return top3
 
-    # 2. Parse rendered DRIVER STANDINGS table rows (Pos | Driver (with flag) | Points)
     dom_rows = page.evaluate(
         """() => {
             const out = [];
@@ -328,7 +415,6 @@ def extract_top3_from_event_standings(page, event_id: str) -> list[dict[str, Any
                     .filter(Boolean);
                 if (cells.length < 2) continue;
 
-                // Extract country flag from <img>, <span class="fi fi-de">, or data-country inside the row
                 let country = '';
                 const flagCandidates = Array.from(row.querySelectorAll('img, span, i, svg, [class*="flag"], [class*="fi-"], [data-country]'));
                 for (const el of flagCandidates) {
@@ -394,7 +480,7 @@ def main() -> None:
         login_wss(page)
 
         finished_series = collect_finished_series_from_manager(page)
-        print(f"Found {len(finished_series)} finished series in series-manager.")
+        print(f"Found {len(finished_series)} finished series across all pages in series-manager.")
 
         for s in finished_series:
             sid = s["seriesId"]
