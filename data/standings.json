@@ -1,5 +1,546 @@
 {
-  "updated": "2026-11-20T17:32:05.782426+00:00",
+  "updated": "2026-11-20T17:37:35.882469+00:00",
   "organizationUrl": "https://paddock.worldsimseries.com/organizations/2b746de0d67e2930b18aacfa19e07eeb#/finished-events",
-  "events": []
+  "events": [
+    {
+      "id": "296846",
+      "name": "FINISHED",
+      "series": "AMKRO",
+      "status": "finished",
+      "date": "",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202608030142246a6ff20003bfb.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/296846#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/296846/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "C. Mach",
+          "fullName": "C. Mach",
+          "countryCode": "",
+          "flag": "",
+          "points": "451"
+        },
+        {
+          "position": 2,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "",
+          "flag": "",
+          "points": "360"
+        },
+        {
+          "position": 3,
+          "name": "I. Budzowski",
+          "fullName": "I. Budzowski",
+          "countryCode": "",
+          "flag": "",
+          "points": "331"
+        }
+      ]
+    },
+    {
+      "id": "303335",
+      "name": "FINISHED",
+      "series": "AMKRO",
+      "status": "finished",
+      "date": "",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202610151807146ad116523441c.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/303335#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/303335/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "",
+          "flag": "",
+          "points": "73"
+        },
+        {
+          "position": 2,
+          "name": "L. O'brien",
+          "fullName": "L. O'brien",
+          "countryCode": "",
+          "flag": "",
+          "points": "68"
+        },
+        {
+          "position": 3,
+          "name": "I. Budzowski",
+          "fullName": "I. Budzowski",
+          "countryCode": "",
+          "flag": "",
+          "points": "58"
+        }
+      ]
+    },
+    {
+      "id": "295981",
+      "name": "FINISHED",
+      "series": "AMKRO",
+      "status": "finished",
+      "date": "",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202608032105216a7102915ddb2.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/295981#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/295981/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "",
+          "flag": "",
+          "points": "74"
+        },
+        {
+          "position": 2,
+          "name": "C. Mach",
+          "fullName": "C. Mach",
+          "countryCode": "",
+          "flag": "",
+          "points": "40"
+        },
+        {
+          "position": 3,
+          "name": "E. Ghelos",
+          "fullName": "E. Ghelos",
+          "countryCode": "",
+          "flag": "",
+          "points": "38"
+        }
+      ]
+    },
+    {
+      "id": "305047",
+      "name": "FINISHED",
+      "series": "AMKRO",
+      "status": "finished",
+      "date": "",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202611032024336aea43018815e.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/305047#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/305047/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "S. D. Amaro",
+          "fullName": "S. D. Amaro",
+          "countryCode": "",
+          "flag": "",
+          "points": "25"
+        },
+        {
+          "position": 2,
+          "name": "J. Trnavský",
+          "fullName": "J. Trnavský",
+          "countryCode": "",
+          "flag": "",
+          "points": "18"
+        },
+        {
+          "position": 3,
+          "name": "O. Ramach",
+          "fullName": "O. Ramach",
+          "countryCode": "",
+          "flag": "",
+          "points": "15"
+        }
+      ]
+    },
+    {
+      "id": "296845",
+      "name": "FINISHED",
+      "series": "AMKRO",
+      "status": "finished",
+      "date": "",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202608030142246a6ff20003bfb.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/296845#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/296845/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "C. Mach",
+          "fullName": "C. Mach",
+          "countryCode": "",
+          "flag": "",
+          "points": "451"
+        },
+        {
+          "position": 2,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "",
+          "flag": "",
+          "points": "360"
+        },
+        {
+          "position": 3,
+          "name": "I. Budzowski",
+          "fullName": "I. Budzowski",
+          "countryCode": "",
+          "flag": "",
+          "points": "331"
+        }
+      ]
+    },
+    {
+      "id": "301587",
+      "name": "FINISHED",
+      "series": "AMKRO",
+      "status": "finished",
+      "date": "",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202609270429316ab89bab2cf60.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/301587#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/301587/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "M. Antu",
+          "fullName": "M. Antu",
+          "countryCode": "",
+          "flag": "",
+          "points": "50"
+        },
+        {
+          "position": 2,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "",
+          "flag": "",
+          "points": "25"
+        },
+        {
+          "position": 3,
+          "name": "T. Bilias",
+          "fullName": "T. Bilias",
+          "countryCode": "",
+          "flag": "",
+          "points": "18"
+        }
+      ]
+    },
+    {
+      "id": "303334",
+      "name": "FINISHED",
+      "series": "AMKRO",
+      "status": "finished",
+      "date": "",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202610151807146ad116523441c.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/303334#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/303334/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "",
+          "flag": "",
+          "points": "73"
+        },
+        {
+          "position": 2,
+          "name": "L. O'brien",
+          "fullName": "L. O'brien",
+          "countryCode": "",
+          "flag": "",
+          "points": "68"
+        },
+        {
+          "position": 3,
+          "name": "I. Budzowski",
+          "fullName": "I. Budzowski",
+          "countryCode": "",
+          "flag": "",
+          "points": "58"
+        }
+      ]
+    },
+    {
+      "id": "301586",
+      "name": "FINISHED",
+      "series": "AMKRO",
+      "status": "finished",
+      "date": "",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202609270429316ab89bab2cf60.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/301586#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/301586/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "M. Antu",
+          "fullName": "M. Antu",
+          "countryCode": "",
+          "flag": "",
+          "points": "50"
+        },
+        {
+          "position": 2,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "",
+          "flag": "",
+          "points": "25"
+        },
+        {
+          "position": 3,
+          "name": "T. Bilias",
+          "fullName": "T. Bilias",
+          "countryCode": "",
+          "flag": "",
+          "points": "18"
+        }
+      ]
+    },
+    {
+      "id": "297608",
+      "name": "FINISHED",
+      "series": "AMKRO",
+      "status": "finished",
+      "date": "",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202610181940456ad520bde3f69.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/297608#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/297608/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "I. Budzowski",
+          "fullName": "I. Budzowski",
+          "countryCode": "",
+          "flag": "",
+          "points": "50"
+        },
+        {
+          "position": 2,
+          "name": "F. Gerold",
+          "fullName": "F. Gerold",
+          "countryCode": "",
+          "flag": "",
+          "points": "24"
+        },
+        {
+          "position": 3,
+          "name": "P. Jones",
+          "fullName": "P. Jones",
+          "countryCode": "",
+          "flag": "",
+          "points": "18"
+        }
+      ]
+    },
+    {
+      "id": "303333",
+      "name": "FINISHED",
+      "series": "AMKRO",
+      "status": "finished",
+      "date": "",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202610151807146ad116523441c.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/303333#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/303333/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "",
+          "flag": "",
+          "points": "73"
+        },
+        {
+          "position": 2,
+          "name": "L. O'brien",
+          "fullName": "L. O'brien",
+          "countryCode": "",
+          "flag": "",
+          "points": "68"
+        },
+        {
+          "position": 3,
+          "name": "I. Budzowski",
+          "fullName": "I. Budzowski",
+          "countryCode": "",
+          "flag": "",
+          "points": "58"
+        }
+      ]
+    },
+    {
+      "id": "295979",
+      "name": "FINISHED",
+      "series": "AMKRO",
+      "status": "finished",
+      "date": "",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202608032105216a7102915ddb2.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/295979#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/295979/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "",
+          "flag": "",
+          "points": "74"
+        },
+        {
+          "position": 2,
+          "name": "C. Mach",
+          "fullName": "C. Mach",
+          "countryCode": "",
+          "flag": "",
+          "points": "40"
+        },
+        {
+          "position": 3,
+          "name": "E. Ghelos",
+          "fullName": "E. Ghelos",
+          "countryCode": "",
+          "flag": "",
+          "points": "38"
+        }
+      ]
+    },
+    {
+      "id": "301585",
+      "name": "FINISHED",
+      "series": "AMKRO",
+      "status": "finished",
+      "date": "",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202609270429316ab89bab2cf60.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/301585#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/301585/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "M. Antu",
+          "fullName": "M. Antu",
+          "countryCode": "",
+          "flag": "",
+          "points": "50"
+        },
+        {
+          "position": 2,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "",
+          "flag": "",
+          "points": "25"
+        },
+        {
+          "position": 3,
+          "name": "T. Bilias",
+          "fullName": "T. Bilias",
+          "countryCode": "",
+          "flag": "",
+          "points": "18"
+        }
+      ]
+    },
+    {
+      "id": "296841",
+      "name": "FINISHED",
+      "series": "AMKRO",
+      "status": "finished",
+      "date": "",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202608030142246a6ff20003bfb.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/296841#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/296841/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "C. Mach",
+          "fullName": "C. Mach",
+          "countryCode": "",
+          "flag": "",
+          "points": "451"
+        },
+        {
+          "position": 2,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "",
+          "flag": "",
+          "points": "360"
+        },
+        {
+          "position": 3,
+          "name": "I. Budzowski",
+          "fullName": "I. Budzowski",
+          "countryCode": "",
+          "flag": "",
+          "points": "331"
+        }
+      ]
+    },
+    {
+      "id": "303332",
+      "name": "FINISHED",
+      "series": "AMKRO",
+      "status": "finished",
+      "date": "",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202610151807146ad116523441c.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/303332#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/303332/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "",
+          "flag": "",
+          "points": "73"
+        },
+        {
+          "position": 2,
+          "name": "L. O'brien",
+          "fullName": "L. O'brien",
+          "countryCode": "",
+          "flag": "",
+          "points": "68"
+        },
+        {
+          "position": 3,
+          "name": "I. Budzowski",
+          "fullName": "I. Budzowski",
+          "countryCode": "",
+          "flag": "",
+          "points": "58"
+        }
+      ]
+    },
+    {
+      "id": "295978",
+      "name": "FINISHED",
+      "series": "AMKRO",
+      "status": "finished",
+      "date": "",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202608032105216a7102915ddb2.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/295978#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/295978/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "",
+          "flag": "",
+          "points": "74"
+        },
+        {
+          "position": 2,
+          "name": "C. Mach",
+          "fullName": "C. Mach",
+          "countryCode": "",
+          "flag": "",
+          "points": "40"
+        },
+        {
+          "position": 3,
+          "name": "E. Ghelos",
+          "fullName": "E. Ghelos",
+          "countryCode": "",
+          "flag": "",
+          "points": "38"
+        }
+      ]
+    }
+  ]
 }
