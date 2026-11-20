@@ -1,5 +1,5 @@
 :root{
-  --bg:#000000; --surface:#0C0C0E; --alt:#120608; --ink:#FFFFFF; --muted:#B8B0B2;
+  --bg:#000000; --surface:#0C0C0E; --alt:#140609; --ink:#FFFFFF; --muted:#B8B0B2;
   --accent:#57141E; --accent-bright:#7D1D2B; --accent-ink:#FFFFFF; --line:#2B1216; --radius:16px;
   --font:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
 }
@@ -11,7 +11,7 @@ code{background:var(--alt);padding:.1em .4em;border-radius:6px}
 .skip{position:absolute;left:-999px}
 .skip:focus{left:8px;top:8px;background:var(--surface);padding:8px 12px;z-index:100}
 
-.site-header{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:20px;padding:12px 24px;background:rgba(0,0,0,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.site-header{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:20px;padding:12px 24px;background:rgba(0,0,0,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
 .brand{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:.08em;text-decoration:none;color:#FFFFFF}
 .logo{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:50%;background:var(--accent);border:1px solid rgba(255,255,255,.25);color:#FFFFFF;font-weight:900}
 nav{display:flex;gap:18px;margin-left:12px;flex:1}
@@ -25,8 +25,8 @@ nav a:hover{color:#FFFFFF}
 .menu-btn{display:none;border:1px solid var(--line);background:var(--surface);color:#FFFFFF;border-radius:10px;padding:6px 12px;font:inherit}
 
 /* Organization Logo Hero Banner */
-.logo-hero{background:#000000;border-bottom:2px solid var(--accent);padding:56px 24px;display:grid;place-items:center}
-.logo-hero img{width:min(540px,88vw);height:auto;display:block;object-fit:contain}
+.logo-hero{background:#000000;border-bottom:2px solid var(--accent);padding:40px 24px;display:flex;justify-content:center;align-items:center}
+.logo-hero img{max-width:440px;max-height:240px;width:85%;height:auto;display:block;object-fit:contain}
 
 .cta{display:flex;flex-wrap:wrap;gap:12px;margin:18px 0 0}
 .btn{border:2px solid #FFFFFF;background:transparent;color:#FFFFFF;padding:10px 18px;border-radius:99px;font:inherit;font-weight:700;cursor:pointer;text-decoration:none;transition:transform .12s,background .15s,border-color .15s}
