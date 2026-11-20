@@ -176,7 +176,7 @@ async function loadEvents(){
     const data = await (await fetch('data/events.json',{cache:'no-store'})).json();
     const all = (data.events||[]).slice().sort((a,b)=>new Date(a.start)-new Date(b.start));
     const now = Date.now();
-    const upcoming = all.filter(e=>new Date(e.start).getTime()+evDur(e)>=now).slice(0,3);
+    const upcoming = all.filter(e=>new Date(e.start).getTime()+evDur(e)>=now);
     LIST = upcoming.length ? upcoming : all.slice(-1);   // nothing upcoming: show the most recent one
     EVENT = LIST[0] || null;
     if(!LIST.length){$('#eventList').textContent='No races scheduled yet. Check the Paddock.'; return;}
