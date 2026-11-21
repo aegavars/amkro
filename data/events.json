@@ -1,6 +1,14 @@
 {
   "events": [
     {
+      "name": "IN PROGRESS - DRIVE NOW!",
+      "start": "2026-11-21T12:45:00+01:00",
+      "durationHours": 2,
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202611211141236b0183630d319.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/306649",
+      "description": ""
+    },
+    {
       "name": "TATUUS WORLD SERIES OPEN - MONZA (16/16)",
       "start": "2026-11-21T19:00:00+01:00",
       "durationHours": 2,
