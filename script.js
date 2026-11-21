@@ -25,8 +25,6 @@ const EXCLUDED_SERIES = new Set([
   'FREC CHALLENGE',
 ]);
 
-const ARCHIVE_PAGE_SIZE = 9;
-
 const TIMELINE = [
   ['JAN 2023','Team founded','A few friends, one Discord server, one league.'],
   ['APR 2023','First league win','Our first podium on the road to the title.'],
@@ -288,8 +286,8 @@ if(toTop){
   toTop.onclick=()=>scrollTo({top:0});
 }
 
-/* ====== Series Standings (Latest 3 + Centered SHOW ALL -> 9-per-page Paginated Modal + Blacklist Filter) ====== */
-let ST = [], stQuery = '', archivePage = 1;
+/* ====== Series Standings (Ongoing Top 3 + Dropdown, Finished Latest 3 + Dropdown, Unified Search) ====== */
+let ST = [], stQuery = '', ongoingExpanded = false, finishedExpanded = false;
 
 function normalizeSeriesName(raw){
   return String(raw || '').toUpperCase().replace(/\s+/g, ' ').trim();
@@ -348,7 +346,8 @@ function getSeriesTop3(e){
 }
 
 function buildStandingCard(e){
-  const card = el('article', 'st-card');
+  const isOngoing = e.status === 'ongoing';
+  const card = el('article', 'st-card' + (isOngoing ? ' is-ongoing' : ''));
   const seriesTitle = (e.name && e.name.toUpperCase() !== 'FINISHED') ? e.name : (e.series || 'Series');
   const standingsHref = e.standingsUrl || e.url || '#';
 
@@ -356,14 +355,17 @@ function buildStandingCard(e){
   thumbLink.href = standingsHref;
   thumbLink.target = '_blank';
   thumbLink.rel = 'noopener';
-  thumbLink.setAttribute('aria-label', 'Open full standings for ' + seriesTitle);
+  thumbLink.setAttribute('aria-label', 'Open standings for ' + seriesTitle);
   if(e.thumbnail) thumbLink.style.backgroundImage = `url("${e.thumbnail}")`;
 
   const body = el('div', 'st-card-body');
 
   const head = el('div', 'st-card-head');
   const titleWrap = el('div', 'st-card-title');
-  titleWrap.append(el('span', 'st-series', 'FINISHED SERIES'));
+  const badgeText = isOngoing
+    ? (e.progress ? e.progress.toUpperCase() : 'ONGOING SERIES')
+    : 'FINISHED SERIES';
+  titleWrap.append(el('span', 'st-series' + (isOngoing ? ' ongoing' : ''), badgeText));
   titleWrap.append(el('h3', null, seriesTitle));
   if(e.date) titleWrap.append(el('small', 'muted', e.date));
   head.append(titleWrap);
@@ -385,7 +387,7 @@ function buildStandingCard(e){
     });
   } else {
     const empty = el('li', 'podium-row');
-    empty.append(el('span', 'muted', 'Podium results available on full standings page.'));
+    empty.append(el('span', 'muted', isOngoing ? 'Standings update after Round 1.' : 'Podium results available on full standings page.'));
     podium.append(empty);
   }
   body.append(podium);
@@ -402,104 +404,45 @@ function buildStandingCard(e){
   return card;
 }
 
-function getAllowedFinishedSeries(){
-  return ST.filter(e => (!e.status || e.status === 'finished') && isSeriesAllowed(e));
+function matchesSearch(e, q){
+  if(!q) return true;
+  const hay = (
+    (e.name || '') + ' ' +
+    (e.series || '') + ' ' +
+    (e.progress || '') + ' ' +
+    (e.top3 || []).map(d => d.name).join(' ')
+  ).toLowerCase();
+  return hay.includes(q);
 }
 
-function renderArchivePage(page){
-  const items = getAllowedFinishedSeries();
-  const totalPages = Math.max(1, Math.ceil(items.length / ARCHIVE_PAGE_SIZE));
-  archivePage = Math.min(Math.max(1, page), totalPages);
+function buildGroupBlock(headingText, items, expanded, onToggle){
+  const group = el('div', 'st-group');
 
-  const grid = $('#stArchiveGrid');
-  const pag = $('#stArchivePagination');
-  if(!grid || !pag) return;
+  const header = el('div', 'st-group-header');
+  header.append(el('h3', 'st-group-title', headingText));
+  header.append(el('span', 'st-group-count', items.length + ' SERIES'));
+  group.append(header);
 
-  grid.textContent = '';
-  const start = (archivePage - 1) * ARCHIVE_PAGE_SIZE;
-  items.slice(start, start + ARCHIVE_PAGE_SIZE).forEach(e => {
-    grid.append(buildStandingCard(e));
-  });
+  const grid = el('div', 'st-cards-grid');
+  const visible = (stQuery || expanded) ? items : items.slice(0, 3);
+  visible.forEach(e => grid.append(buildStandingCard(e)));
+  group.append(grid);
 
-  pag.textContent = '';
-  const prevBtn = el('button', 'st-page-btn', '‹');
-  prevBtn.type = 'button';
-  prevBtn.disabled = archivePage === 1;
-  prevBtn.onclick = () => {
-    renderArchivePage(archivePage - 1);
-    const modal = $('#stArchiveModal');
-    if(modal) modal.scrollTop = 0;
-  };
-  pag.append(prevBtn);
-
-  for(let p = 1; p <= totalPages; p++){
-    const btn = el('button', 'st-page-btn' + (p === archivePage ? ' active' : ''), String(p));
-    btn.type = 'button';
-    btn.onclick = () => {
-      renderArchivePage(p);
-      const modal = $('#stArchiveModal');
-      if(modal) modal.scrollTop = 0;
-    };
-    pag.append(btn);
+  if(!stQuery && items.length > 3){
+    const remaining = items.length - 3;
+    const dropWrap = el('div', 'st-dropdown-wrap');
+    const toggleBtn = el(
+      'button',
+      'btn st-dropdown-btn',
+      expanded ? 'SHOW LESS ▲' : `SHOW ALL ${items.length} (+${remaining} MORE) ▼`
+    );
+    toggleBtn.type = 'button';
+    toggleBtn.onclick = onToggle;
+    dropWrap.append(toggleBtn);
+    group.append(dropWrap);
   }
 
-  const nextBtn = el('button', 'st-page-btn', '›');
-  nextBtn.type = 'button';
-  nextBtn.disabled = archivePage === totalPages;
-  nextBtn.onclick = () => {
-    renderArchivePage(archivePage + 1);
-    const modal = $('#stArchiveModal');
-    if(modal) modal.scrollTop = 0;
-  };
-  pag.append(nextBtn);
-}
-
-function closeStandingsArchive(){
-  const modal = $('#stArchiveModal');
-  if(modal) modal.classList.remove('open');
-  document.body.style.overflow = '';
-}
-
-function openStandingsArchive(){
-  const items = getAllowedFinishedSeries();
-  let modal = $('#stArchiveModal');
-  if(!modal){
-    modal = el('div', 'st-archive-modal');
-    modal.id = 'stArchiveModal';
-
-    const inner = el('div', 'st-archive-inner');
-    const topbar = el('div', 'st-archive-topbar');
-    const title = el('h2', null, 'ALL FINISHED SERIES (' + items.length + ')');
-    title.id = 'stArchiveTitle';
-    const closeBtn = el('button', 'btn', 'CLOSE ✕');
-    closeBtn.type = 'button';
-    closeBtn.onclick = closeStandingsArchive;
-    topbar.append(title, closeBtn);
-
-    const grid = el('div', 'st-archive-grid');
-    grid.id = 'stArchiveGrid';
-
-    const pag = el('div', 'st-archive-pagination');
-    pag.id = 'stArchivePagination';
-
-    inner.append(topbar, grid, pag);
-    modal.append(inner);
-    document.body.append(modal);
-
-    modal.addEventListener('click', e => {
-      if(e.target === modal) closeStandingsArchive();
-    });
-    document.addEventListener('keydown', e => {
-      if(e.key === 'Escape' && modal.classList.contains('open')) closeStandingsArchive();
-    });
-  } else {
-    const title = $('#stArchiveTitle');
-    if(title) title.textContent = 'ALL FINISHED SERIES (' + items.length + ')';
-  }
-
-  renderArchivePage(1);
-  modal.classList.add('open');
-  document.body.style.overflow = 'hidden';
+  return group;
 }
 
 function renderStandings(){
@@ -507,38 +450,31 @@ function renderStandings(){
   if(!box) return;
   box.textContent = '';
 
-  const finished = getAllowedFinishedSeries();
-  const filtered = stQuery
-    ? finished.filter(e =>
-        (e.name + ' ' + (e.series || '') + ' ' + (e.top3 || []).map(d => d.name).join(' '))
-          .toLowerCase()
-          .includes(stQuery)
-      )
-    : finished;
+  const allowed = ST.filter(isSeriesAllowed);
+  const ongoing = allowed.filter(e => e.status === 'ongoing' && matchesSearch(e, stQuery));
+  const finished = allowed.filter(e => e.status !== 'ongoing' && matchesSearch(e, stQuery));
 
-  // Show ONLY the latest 3 when not searching
-  const visible = stQuery ? filtered : filtered.slice(0, 3);
-
-  if(!visible.length){
-    box.textContent = finished.length ? 'No finished series match your search.' : 'No finished series loaded yet.';
-  } else {
-    visible.forEach(e => box.append(buildStandingCard(e)));
+  if(!ongoing.length && !finished.length){
+    box.textContent = allowed.length ? 'No series match your search.' : 'No series loaded yet.';
+    return;
   }
 
-  // Centered SHOW ALL button directly below #stList
-  let showAllWrap = $('#stShowAllWrap');
-  if(!showAllWrap){
-    showAllWrap = el('div', 'st-show-all-wrap');
-    showAllWrap.id = 'stShowAllWrap';
-    box.insertAdjacentElement('afterend', showAllWrap);
+  if(ongoing.length){
+    box.append(
+      buildGroupBlock('ONGOING SERIES', ongoing, ongoingExpanded, () => {
+        ongoingExpanded = !ongoingExpanded;
+        renderStandings();
+      })
+    );
   }
-  showAllWrap.textContent = '';
 
-  if(!stQuery && finished.length > 3){
-    const showAllBtn = el('button', 'btn st-show-all-btn', 'SHOW ALL');
-    showAllBtn.type = 'button';
-    showAllBtn.onclick = openStandingsArchive;
-    showAllWrap.append(showAllBtn);
+  if(finished.length){
+    box.append(
+      buildGroupBlock('FINISHED SERIES', finished, finishedExpanded, () => {
+        finishedExpanded = !finishedExpanded;
+        renderStandings();
+      })
+    );
   }
 }
 
