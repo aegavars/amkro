@@ -1,5 +1,1749 @@
 {
-  "updated": "2026-11-21T13:51:11.972457+00:00",
+  "updated": "2026-11-21T19:40:43.589496+00:00",
   "organizationUrl": "https://paddock.worldsimseries.com/series-manager#/",
-  "events": []
+  "events": [
+    {
+      "id": "299320",
+      "seriesId": "2690",
+      "name": "BTCC 99",
+      "series": "BTCC 99",
+      "status": "finished",
+      "date": "7th Oct 17:44",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202609061049246a9d4534bc666.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/299320#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/299320/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "F. Gerold",
+          "fullName": "F. Gerold",
+          "countryCode": "DE",
+          "flag": "🇩🇪",
+          "points": "26"
+        },
+        {
+          "position": 2,
+          "name": "M. Winter",
+          "fullName": "M. Winter",
+          "countryCode": "GB",
+          "flag": "🇬🇧",
+          "points": "18"
+        },
+        {
+          "position": 3,
+          "name": "A. Cagiao",
+          "fullName": "A. Cagiao",
+          "countryCode": "ES",
+          "flag": "🇪🇸",
+          "points": "15"
+        }
+      ]
+    },
+    {
+      "id": "299316",
+      "seriesId": "2689",
+      "name": "FORMULA EASTER",
+      "series": "FORMULA EASTER",
+      "status": "finished",
+      "date": "8th Oct 17:44",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202609061045586a9d4466b1fae.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/299316#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/299316/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "A. Szopher",
+          "fullName": "A. Szopher",
+          "countryCode": "PL",
+          "flag": "🇵🇱",
+          "points": "39"
+        },
+        {
+          "position": 2,
+          "name": "A. Bizhev",
+          "fullName": "A. Bizhev",
+          "countryCode": "PR",
+          "flag": "🇵🇷",
+          "points": "22"
+        },
+        {
+          "position": 3,
+          "name": "S. Bido",
+          "fullName": "S. Bido",
+          "countryCode": "IT",
+          "flag": "🇮🇹",
+          "points": "12"
+        }
+      ]
+    },
+    {
+      "id": "299312",
+      "seriesId": "2688",
+      "name": "INDY CUP",
+      "series": "INDY CUP",
+      "status": "finished",
+      "date": "10th Oct 19:44",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202609061041596a9d4377081bc.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/299312#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/299312/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "A. Szopher",
+          "fullName": "A. Szopher",
+          "countryCode": "PL",
+          "flag": "🇵🇱",
+          "points": "10"
+        },
+        {
+          "position": 2,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "LV",
+          "flag": "🇱🇻",
+          "points": "8"
+        },
+        {
+          "position": 3,
+          "name": "T. Bilias",
+          "fullName": "T. Bilias",
+          "countryCode": "GR",
+          "flag": "🇬🇷",
+          "points": "6"
+        }
+      ]
+    },
+    {
+      "id": "299308",
+      "seriesId": "2687",
+      "name": "FREC CHALLENGE",
+      "series": "FREC CHALLENGE",
+      "status": "finished",
+      "date": "9th Oct 19:44",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202609061037026a9d424e99f07.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/299308#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/299308/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "M. Zulu",
+          "fullName": "M. Zulu",
+          "countryCode": "ZA",
+          "flag": "🇿🇦",
+          "points": "2"
+        },
+        {
+          "position": 2,
+          "name": "I. Budzowski",
+          "fullName": "I. Budzowski",
+          "countryCode": "PL",
+          "flag": "🇵🇱",
+          "points": "0"
+        }
+      ]
+    },
+    {
+      "id": "297608",
+      "seriesId": "2671",
+      "name": "TWS SPECIAL EVENTS",
+      "series": "TWS SPECIAL EVENTS",
+      "status": "finished",
+      "date": "1st Nov 19:33",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202610181940456ad520bde3f69.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/297608#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/297608/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "I. Budzowski",
+          "fullName": "I. Budzowski",
+          "countryCode": "PL",
+          "flag": "🇵🇱",
+          "points": "50"
+        },
+        {
+          "position": 2,
+          "name": "F. Gerold",
+          "fullName": "F. Gerold",
+          "countryCode": "DE",
+          "flag": "🇩🇪",
+          "points": "24"
+        },
+        {
+          "position": 3,
+          "name": "P. Jones",
+          "fullName": "P. Jones",
+          "countryCode": "ES",
+          "flag": "🇪🇸",
+          "points": "18"
+        }
+      ]
+    },
+    {
+      "id": "297079",
+      "seriesId": "2668",
+      "name": "LLL GINETTA GT4 CUP",
+      "series": "LLL GINETTA GT4 CUP",
+      "status": "finished",
+      "date": "9th Sep 17:52",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202608151318426a80673284c08.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/297079#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/297079/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "M. Ruginis",
+          "fullName": "M. Ruginis",
+          "countryCode": "LT",
+          "flag": "🇱🇹",
+          "points": "32"
+        },
+        {
+          "position": 2,
+          "name": "F. Zacche",
+          "fullName": "F. Zacche",
+          "countryCode": "IT",
+          "flag": "🇮🇹",
+          "points": "30"
+        },
+        {
+          "position": 3,
+          "name": "M. Mativeri",
+          "fullName": "M. Mativeri",
+          "countryCode": "GB",
+          "flag": "🇬🇧",
+          "points": "23"
+        }
+      ]
+    },
+    {
+      "id": "297075",
+      "seriesId": "2667",
+      "name": "LLL GTE CHALLENGE",
+      "series": "LLL GTE CHALLENGE",
+      "status": "finished",
+      "date": "10th Sep 17:52",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202608151310166a8065384bdcf.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/297075#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/297075/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "LV",
+          "flag": "🇱🇻",
+          "points": "43"
+        },
+        {
+          "position": 2,
+          "name": "M. Winter",
+          "fullName": "M. Winter",
+          "countryCode": "GB",
+          "flag": "🇬🇧",
+          "points": "27"
+        },
+        {
+          "position": 3,
+          "name": "G. Mazzei",
+          "fullName": "G. Mazzei",
+          "countryCode": "IT",
+          "flag": "🇮🇹",
+          "points": "25"
+        }
+      ]
+    },
+    {
+      "id": "297071",
+      "seriesId": "2666",
+      "name": "LLL SUPER FORMULA",
+      "series": "LLL SUPER FORMULA",
+      "status": "finished",
+      "date": "11th Sep 19:52",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202608151302586a80638284e15.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/297071#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/297071/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "M. A. Mayor",
+          "fullName": "M. A. Mayor",
+          "countryCode": "ES",
+          "flag": "🇪🇸",
+          "points": "26"
+        },
+        {
+          "position": 2,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "LV",
+          "flag": "🇱🇻",
+          "points": "25"
+        },
+        {
+          "position": 3,
+          "name": "M. Winter",
+          "fullName": "M. Winter",
+          "countryCode": "GB",
+          "flag": "🇬🇧",
+          "points": "15"
+        }
+      ]
+    },
+    {
+      "id": "296019",
+      "seriesId": "2657",
+      "name": "LLL CATERHAM ACADEMY",
+      "series": "LLL CATERHAM ACADEMY",
+      "status": "finished",
+      "date": "5th Sep 19:44",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202608051049106a73152649833.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/296019#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/296019/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "O. Shevchenko",
+          "fullName": "O. Shevchenko",
+          "countryCode": "UA",
+          "flag": "🇺🇦",
+          "points": "83"
+        },
+        {
+          "position": 2,
+          "name": "Z. Samoylenko",
+          "fullName": "Z. Samoylenko",
+          "countryCode": "UA",
+          "flag": "🇺🇦",
+          "points": "79"
+        },
+        {
+          "position": 3,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "LV",
+          "flag": "🇱🇻",
+          "points": "40"
+        }
+      ]
+    },
+    {
+      "id": "296460",
+      "seriesId": "2656",
+      "name": "TATUUS WORLD SERIES SEASON 4 PRE-QUALIFYING",
+      "series": "TATUUS WORLD SERIES SEASON 4 PRE-QUALIFYING",
+      "status": "finished",
+      "date": "12th Sep 17:00",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202608022124406a6fb5981fa00.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/296460#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/296460/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "C. Mach",
+          "fullName": "C. Mach",
+          "countryCode": "US",
+          "flag": "🇺🇸",
+          "points": "25"
+        },
+        {
+          "position": 2,
+          "name": "I. Budzowski",
+          "fullName": "I. Budzowski",
+          "countryCode": "PL",
+          "flag": "🇵🇱",
+          "points": "18"
+        },
+        {
+          "position": 3,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "LV",
+          "flag": "🇱🇻",
+          "points": "15"
+        }
+      ]
+    },
+    {
+      "id": "296851",
+      "seriesId": "2653",
+      "name": "TATUUS WORLD SERIES SEASON 4 SPRINT",
+      "series": "TATUUS WORLD SERIES SEASON 4 SPRINT",
+      "status": "finished",
+      "date": "8th Nov 18:38",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202608030142246a6ff20003bfb.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/296851#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/296851/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "LV",
+          "flag": "🇱🇻",
+          "points": "21"
+        },
+        {
+          "position": 2,
+          "name": "C. Mach",
+          "fullName": "C. Mach",
+          "countryCode": "US",
+          "flag": "🇺🇸",
+          "points": "18"
+        },
+        {
+          "position": 3,
+          "name": "S. Durkac",
+          "fullName": "S. Durkac",
+          "countryCode": "SK",
+          "flag": "🇸🇰",
+          "points": "13"
+        }
+      ]
+    },
+    {
+      "id": "291819",
+      "seriesId": "2634",
+      "name": "LLL MX5 CUP - GERMANY",
+      "series": "LLL MX5 CUP - GERMANY",
+      "status": "finished",
+      "date": "7th Aug 19:45",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202606301857016a44117da4d32.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/291819#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/291819/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "LV",
+          "flag": "🇱🇻",
+          "points": "10"
+        },
+        {
+          "position": 2,
+          "name": "M. Winter",
+          "fullName": "M. Winter",
+          "countryCode": "GB",
+          "flag": "🇬🇧",
+          "points": "8"
+        },
+        {
+          "position": 3,
+          "name": "G. Santoro",
+          "fullName": "G. Santoro",
+          "countryCode": "HR",
+          "flag": "🇭🇷",
+          "points": "6"
+        }
+      ]
+    },
+    {
+      "id": "291714",
+      "seriesId": "2633",
+      "name": "LLL SUMMER TEST",
+      "series": "LLL SUMMER TEST",
+      "status": "finished",
+      "date": "19th Jul 18:02",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202606292027416a42d53d9d7db.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/291714#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/291714/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "LV",
+          "flag": "🇱🇻",
+          "points": "43"
+        },
+        {
+          "position": 2,
+          "name": "M. Mativeri",
+          "fullName": "M. Mativeri",
+          "countryCode": "GB",
+          "flag": "🇬🇧",
+          "points": "28"
+        },
+        {
+          "position": 3,
+          "name": "M. Actiņš",
+          "fullName": "M. Actiņš",
+          "countryCode": "LV",
+          "flag": "🇱🇻",
+          "points": "27"
+        }
+      ]
+    },
+    {
+      "id": "292332",
+      "seriesId": "2618",
+      "name": "GT WORLD TOUR",
+      "series": "GT WORLD TOUR",
+      "status": "finished",
+      "date": "12th Jul 18:42",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202606222233136a39b8294778f.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/292332#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/292332/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "F. Filip",
+          "fullName": "F. Filip",
+          "countryCode": "RO",
+          "flag": "🇷🇴",
+          "points": "25"
+        },
+        {
+          "position": 2,
+          "name": "K. Kudlis",
+          "fullName": "K. Kudlis",
+          "countryCode": "LV",
+          "flag": "🇱🇻",
+          "points": "18"
+        },
+        {
+          "position": 3,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "LV",
+          "flag": "🇱🇻",
+          "points": "15"
+        }
+      ]
+    },
+    {
+      "id": "290568",
+      "seriesId": "2612",
+      "name": "PORSCHE CARRERA CUP BENELUX",
+      "series": "PORSCHE CARRERA CUP BENELUX",
+      "status": "finished",
+      "date": "25th Jul 19:17",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202606201828106a36dbbaae769.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/290568#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/290568/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "S. Veršickas",
+          "fullName": "S. Veršickas",
+          "countryCode": "LT",
+          "flag": "🇱🇹",
+          "points": "25"
+        },
+        {
+          "position": 2,
+          "name": "M. Winter",
+          "fullName": "M. Winter",
+          "countryCode": "GB",
+          "flag": "🇬🇧",
+          "points": "23"
+        },
+        {
+          "position": 3,
+          "name": "S. Iordache",
+          "fullName": "S. Iordache",
+          "countryCode": "RO",
+          "flag": "🇷🇴",
+          "points": "18"
+        }
+      ]
+    },
+    {
+      "id": "288618",
+      "seriesId": "2589",
+      "name": "LLL 944 TURBO CUP",
+      "series": "LLL 944 TURBO CUP",
+      "status": "finished",
+      "date": "7th Jul 19:05",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202606031401316a2033bb9d8cb.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/288618#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/288618/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "S. B. Stattin",
+          "fullName": "S. B. Stattin",
+          "countryCode": "SE",
+          "flag": "🇸🇪",
+          "points": "18"
+        },
+        {
+          "position": 2,
+          "name": "O. Vega",
+          "fullName": "O. Vega",
+          "countryCode": "ES",
+          "flag": "🇪🇸",
+          "points": "15"
+        },
+        {
+          "position": 3,
+          "name": "M. Mativeri",
+          "fullName": "M. Mativeri",
+          "countryCode": "GB",
+          "flag": "🇬🇧",
+          "points": "12"
+        }
+      ]
+    },
+    {
+      "id": "287972",
+      "seriesId": "2583",
+      "name": "LLL DTM GOLDEN ERA",
+      "series": "LLL DTM GOLDEN ERA",
+      "status": "finished",
+      "date": "3rd Jul 19:47",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202605281910166a189318e073a.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/287972#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/287972/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "M. Winter",
+          "fullName": "M. Winter",
+          "countryCode": "GB",
+          "flag": "🇬🇧",
+          "points": "41"
+        },
+        {
+          "position": 2,
+          "name": "S. B. Stattin",
+          "fullName": "S. B. Stattin",
+          "countryCode": "SE",
+          "flag": "🇸🇪",
+          "points": "25"
+        },
+        {
+          "position": 3,
+          "name": "M. Ruginis",
+          "fullName": "M. Ruginis",
+          "countryCode": "LT",
+          "flag": "🇱🇹",
+          "points": "23"
+        }
+      ]
+    },
+    {
+      "id": "285472",
+      "seriesId": "2557",
+      "name": "LLL SODI SERIES",
+      "series": "LLL SODI SERIES",
+      "status": "finished",
+      "date": "2nd Jun 18:48",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/2026050518515069fa3c460d2d3.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/285472#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/285472/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "V. Medina",
+          "fullName": "V. Medina",
+          "countryCode": "ES",
+          "flag": "🇪🇸",
+          "points": "52"
+        },
+        {
+          "position": 2,
+          "name": "A. Pascal",
+          "fullName": "A. Pascal",
+          "countryCode": "GR",
+          "flag": "🇬🇷",
+          "points": "43"
+        },
+        {
+          "position": 3,
+          "name": "E. Lecourbe",
+          "fullName": "E. Lecourbe",
+          "countryCode": "FR",
+          "flag": "🇫🇷",
+          "points": "33"
+        }
+      ]
+    },
+    {
+      "id": "284134",
+      "seriesId": "2542",
+      "name": "TRABANT-M2 MULTICLASS",
+      "series": "TRABANT-M2 MULTICLASS",
+      "status": "finished",
+      "date": "29th May 18:59",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/2026042315224469ea39445c158.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/284134#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/284134/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "M. Ruginis",
+          "fullName": "M. Ruginis",
+          "countryCode": "LT",
+          "flag": "🇱🇹",
+          "points": "14"
+        },
+        {
+          "position": 2,
+          "name": "D. Ivannikov",
+          "fullName": "D. Ivannikov",
+          "countryCode": "UA",
+          "flag": "🇺🇦",
+          "points": "12"
+        },
+        {
+          "position": 3,
+          "name": "M. Mativeri",
+          "fullName": "M. Mativeri",
+          "countryCode": "GB",
+          "flag": "🇬🇧",
+          "points": "10"
+        }
+      ]
+    },
+    {
+      "id": "282833",
+      "seriesId": "2536",
+      "name": "LLL 205 SERIES",
+      "series": "LLL 205 SERIES",
+      "status": "finished",
+      "date": "5th May 18:55",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/2026041118081269da8e0c8f95d.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/282833#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/282833/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "M. Winter",
+          "fullName": "M. Winter",
+          "countryCode": "GB",
+          "flag": "🇬🇧",
+          "points": "35"
+        },
+        {
+          "position": 2,
+          "name": "G. Santonicola",
+          "fullName": "G. Santonicola",
+          "countryCode": "IT",
+          "flag": "🇮🇹",
+          "points": "25"
+        },
+        {
+          "position": 3,
+          "name": "A. R. Caballero",
+          "fullName": "A. R. Caballero",
+          "countryCode": "ES",
+          "flag": "🇪🇸",
+          "points": "23"
+        }
+      ]
+    },
+    {
+      "id": "282827",
+      "seriesId": "2535",
+      "name": "LLL RADICAL CUP",
+      "series": "LLL RADICAL CUP",
+      "status": "finished",
+      "date": "9th May 18:47",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/2026041117434069da884ca5dac.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/282827#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/282827/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "N. Edwards",
+          "fullName": "N. Edwards",
+          "countryCode": "CA",
+          "flag": "🇨🇦",
+          "points": "59"
+        },
+        {
+          "position": 2,
+          "name": "M. Antu",
+          "fullName": "M. Antu",
+          "countryCode": "DE",
+          "flag": "🇩🇪",
+          "points": "49"
+        },
+        {
+          "position": 3,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "LV",
+          "flag": "🇱🇻",
+          "points": "40"
+        }
+      ]
+    },
+    {
+      "id": "277383",
+      "seriesId": "2465",
+      "name": "LLL MX-5 CUP - US TOUR",
+      "series": "LLL MX-5 CUP - US TOUR",
+      "status": "finished",
+      "date": "11th Apr 20:05",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/2026022817244069a324d81eaae.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/277383#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/277383/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "E. Anisimovas",
+          "fullName": "E. Anisimovas",
+          "countryCode": "LT",
+          "flag": "🇱🇹",
+          "points": "51"
+        },
+        {
+          "position": 2,
+          "name": "D. User",
+          "fullName": "D. User",
+          "countryCode": "NA",
+          "flag": "🇳🇦",
+          "points": "40"
+        },
+        {
+          "position": 3,
+          "name": "N. Knysh",
+          "fullName": "N. Knysh",
+          "countryCode": "UA",
+          "flag": "🇺🇦",
+          "points": "39"
+        }
+      ]
+    },
+    {
+      "id": "275696",
+      "seriesId": "2445",
+      "name": "LLL BATCC CHALLANGE",
+      "series": "LLL BATCC CHALLANGE",
+      "status": "finished",
+      "date": "5th Apr 17:52",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202602151513566991e2b41d1b1.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/275696#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/275696/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "R. Svetins",
+          "fullName": "R. Svetins",
+          "countryCode": "LV",
+          "flag": "🇱🇻",
+          "points": "94"
+        },
+        {
+          "position": 2,
+          "name": "N. Einingis",
+          "fullName": "N. Einingis",
+          "countryCode": "LT",
+          "flag": "🇱🇹",
+          "points": "57"
+        },
+        {
+          "position": 3,
+          "name": "M. Nykänen",
+          "fullName": "M. Nykänen",
+          "countryCode": "FI",
+          "flag": "🇫🇮",
+          "points": "51"
+        }
+      ]
+    },
+    {
+      "id": "272495",
+      "seriesId": "2420",
+      "name": "TATUUS WORLD SERIES SEASON 3 SPRINT",
+      "series": "TATUUS WORLD SERIES SEASON 3 SPRINT",
+      "status": "finished",
+      "date": "7th Jun 17:52",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202512291400556952899756743.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/272495#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/272495/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "LV",
+          "flag": "🇱🇻",
+          "points": "31"
+        },
+        {
+          "position": 2,
+          "name": "C. Mach",
+          "fullName": "C. Mach",
+          "countryCode": "US",
+          "flag": "🇺🇸",
+          "points": "29"
+        },
+        {
+          "position": 3,
+          "name": "K. Kudlis",
+          "fullName": "K. Kudlis",
+          "countryCode": "LV",
+          "flag": "🇱🇻",
+          "points": "28"
+        }
+      ]
+    },
+    {
+      "id": "272491",
+      "seriesId": "2415",
+      "name": "TATUUS WORLD SERIES SEASON 3",
+      "series": "TATUUS WORLD SERIES SEASON 3",
+      "status": "finished",
+      "date": "21st Jun 18:24",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202512291400556952899756743.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/272491#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/272491/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "LV",
+          "flag": "🇱🇻",
+          "points": "457"
+        },
+        {
+          "position": 2,
+          "name": "C. Mach",
+          "fullName": "C. Mach",
+          "countryCode": "US",
+          "flag": "🇺🇸",
+          "points": "321"
+        },
+        {
+          "position": 3,
+          "name": "K. Kudlis",
+          "fullName": "K. Kudlis",
+          "countryCode": "LV",
+          "flag": "🇱🇻",
+          "points": "231"
+        }
+      ]
+    },
+    {
+      "id": "273914",
+      "seriesId": "2413",
+      "name": "LLL COMMUNITY RACE",
+      "series": "LLL COMMUNITY RACE",
+      "status": "finished",
+      "date": "5th Feb 19:42",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/20260117220116696c06acafc5a.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/273914#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/273914/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "M. Nykänen",
+          "fullName": "M. Nykänen",
+          "countryCode": "FI",
+          "flag": "🇫🇮",
+          "points": "10"
+        },
+        {
+          "position": 2,
+          "name": "M. Winter",
+          "fullName": "M. Winter",
+          "countryCode": "GB",
+          "flag": "🇬🇧",
+          "points": "8"
+        },
+        {
+          "position": 3,
+          "name": "M. Janak",
+          "fullName": "M. Janak",
+          "countryCode": "CZ",
+          "flag": "🇨🇿",
+          "points": "8"
+        }
+      ]
+    },
+    {
+      "id": "272361",
+      "seriesId": "2403",
+      "name": "TWS OPEN",
+      "series": "TWS OPEN",
+      "status": "finished",
+      "date": "25th Jan 18:03",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202512291400556952899756743.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/272361#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/272361/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "A. Ciobanu",
+          "fullName": "A. Ciobanu",
+          "countryCode": "IT",
+          "flag": "🇮🇹",
+          "points": "75"
+        },
+        {
+          "position": 2,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "LV",
+          "flag": "🇱🇻",
+          "points": "40"
+        },
+        {
+          "position": 3,
+          "name": "E. Ghelos",
+          "fullName": "E. Ghelos",
+          "countryCode": "GR",
+          "flag": "🇬🇷",
+          "points": "18"
+        }
+      ]
+    },
+    {
+      "id": "270757",
+      "seriesId": "2398",
+      "name": "TWS PRE-SEASON TESTING SPRINT",
+      "series": "TWS PRE-SEASON TESTING SPRINT",
+      "status": "finished",
+      "date": "18th Jan 18:56",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202512291400556952899756743.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/270757#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/270757/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "C. Mach",
+          "fullName": "C. Mach",
+          "countryCode": "US",
+          "flag": "🇺🇸",
+          "points": "25"
+        },
+        {
+          "position": 2,
+          "name": "G. Frisa",
+          "fullName": "G. Frisa",
+          "countryCode": "IT",
+          "flag": "🇮🇹",
+          "points": "18"
+        },
+        {
+          "position": 3,
+          "name": "E. Ghelos",
+          "fullName": "E. Ghelos",
+          "countryCode": "GR",
+          "flag": "🇬🇷",
+          "points": "15"
+        }
+      ]
+    },
+    {
+      "id": "269663",
+      "seriesId": "2385",
+      "name": "TWS PRE-SEASON TESTING",
+      "series": "TWS PRE-SEASON TESTING",
+      "status": "finished",
+      "date": "18th Jan 20:31",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202512291400556952899756743.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/269663#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/269663/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "LV",
+          "flag": "🇱🇻",
+          "points": "40"
+        },
+        {
+          "position": 2,
+          "name": "S. Durkac",
+          "fullName": "S. Durkac",
+          "countryCode": "SK",
+          "flag": "🇸🇰",
+          "points": "36"
+        },
+        {
+          "position": 3,
+          "name": "C. Mach",
+          "fullName": "C. Mach",
+          "countryCode": "US",
+          "flag": "🇺🇸",
+          "points": "25"
+        }
+      ]
+    },
+    {
+      "id": "265838",
+      "seriesId": "2355",
+      "name": "WORLD PANEL VAN CHAMPIONSHIP",
+      "series": "WORLD PANEL VAN CHAMPIONSHIP",
+      "status": "finished",
+      "date": "29th Jan 20:38",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202512062324266934bb2ae5be6.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/265838#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/265838/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "M. Winter",
+          "fullName": "M. Winter",
+          "countryCode": "GB",
+          "flag": "🇬🇧",
+          "points": "84"
+        },
+        {
+          "position": 2,
+          "name": "H. Kuisti",
+          "fullName": "H. Kuisti",
+          "countryCode": "FI",
+          "flag": "🇫🇮",
+          "points": "41"
+        },
+        {
+          "position": 3,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "LV",
+          "flag": "🇱🇻",
+          "points": "37"
+        }
+      ]
+    },
+    {
+      "id": "265184",
+      "seriesId": "2350",
+      "name": "LLL WINTER SHOWDOWN",
+      "series": "LLL WINTER SHOWDOWN",
+      "status": "finished",
+      "date": "27th Dec 21:29",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/20251202204315692f4f6339ef9.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/265184#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/265184/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "A. Bizhev",
+          "fullName": "A. Bizhev",
+          "countryCode": "PR",
+          "flag": "🇵🇷",
+          "points": "15"
+        },
+        {
+          "position": 2,
+          "name": "M. Janak",
+          "fullName": "M. Janak",
+          "countryCode": "CZ",
+          "flag": "🇨🇿",
+          "points": "12"
+        },
+        {
+          "position": 3,
+          "name": "P. Møller",
+          "fullName": "P. Møller",
+          "countryCode": "DK",
+          "flag": "🇩🇰",
+          "points": "12"
+        }
+      ]
+    },
+    {
+      "id": "261834",
+      "seriesId": "2335",
+      "name": "FERRARI F2004 REVIVAL SERIES",
+      "series": "FERRARI F2004 REVIVAL SERIES",
+      "status": "finished",
+      "date": "16th Dec 21:10",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202511121825346914d11e7b794.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/261834#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/261834/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "S. B. Stattin",
+          "fullName": "S. B. Stattin",
+          "countryCode": "SE",
+          "flag": "🇸🇪",
+          "points": "18"
+        },
+        {
+          "position": 2,
+          "name": "P. Baur",
+          "fullName": "P. Baur",
+          "countryCode": "DE",
+          "flag": "🇩🇪",
+          "points": "15"
+        },
+        {
+          "position": 3,
+          "name": "O. Yashchenko",
+          "fullName": "O. Yashchenko",
+          "countryCode": "UA",
+          "flag": "🇺🇦",
+          "points": "12"
+        }
+      ]
+    },
+    {
+      "id": "260061",
+      "seriesId": "2329",
+      "name": "TWS OFF SEASON",
+      "series": "TWS OFF SEASON",
+      "status": "finished",
+      "date": "28th Dec 19:24",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202511102130406912598052467.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/260061#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/260061/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "M. Sabeckis",
+          "fullName": "M. Sabeckis",
+          "countryCode": "LT",
+          "flag": "🇱🇹",
+          "points": "31"
+        },
+        {
+          "position": 2,
+          "name": "M. Nykänen",
+          "fullName": "M. Nykänen",
+          "countryCode": "FI",
+          "flag": "🇫🇮",
+          "points": "25"
+        },
+        {
+          "position": 3,
+          "name": "M. Contreras",
+          "fullName": "M. Contreras",
+          "countryCode": "CL",
+          "flag": "🇨🇱",
+          "points": "25"
+        }
+      ]
+    },
+    {
+      "id": "259481",
+      "seriesId": "2324",
+      "name": "LLL DAILY GT3 SERIES",
+      "series": "LLL DAILY GT3 SERIES",
+      "status": "finished",
+      "date": "4th Nov 21:13",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/2025102819493269011e4c478dd.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/259481#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/259481/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "R. Ballara",
+          "fullName": "R. Ballara",
+          "countryCode": "ES",
+          "flag": "🇪🇸",
+          "points": "0"
+        },
+        {
+          "position": 2,
+          "name": "M. Policky",
+          "fullName": "M. Policky",
+          "countryCode": "CZ",
+          "flag": "🇨🇿",
+          "points": "0"
+        },
+        {
+          "position": 3,
+          "name": "D. Krieger",
+          "fullName": "D. Krieger",
+          "countryCode": "DE",
+          "flag": "🇩🇪",
+          "points": "0"
+        }
+      ]
+    },
+    {
+      "id": "255333",
+      "seriesId": "2301",
+      "name": "PRAGA R1 - GINETTA GT5 MULTICLASS",
+      "series": "PRAGA R1 - GINETTA GT5 MULTICLASS",
+      "status": "finished",
+      "date": "18th Jan 21:49",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/2025092917221268dac04488913.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/255333#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/255333/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "S. Iordache",
+          "fullName": "S. Iordache",
+          "countryCode": "RO",
+          "flag": "🇷🇴",
+          "points": "53"
+        },
+        {
+          "position": 2,
+          "name": "M. Nykänen",
+          "fullName": "M. Nykänen",
+          "countryCode": "FI",
+          "flag": "🇫🇮",
+          "points": "47"
+        },
+        {
+          "position": 3,
+          "name": "A. Kolupaiev",
+          "fullName": "A. Kolupaiev",
+          "countryCode": "UA",
+          "flag": "🇺🇦",
+          "points": "47"
+        }
+      ]
+    },
+    {
+      "id": "250930",
+      "seriesId": "2245",
+      "name": "FORMULA 1600",
+      "series": "FORMULA 1600",
+      "status": "finished",
+      "date": "5th Sep 19:06",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/20250813195755689cee43f01bc.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/250930#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/250930/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "LV",
+          "flag": "🇱🇻",
+          "points": "52"
+        },
+        {
+          "position": 2,
+          "name": "L. Blümke",
+          "fullName": "L. Blümke",
+          "countryCode": "DE",
+          "flag": "🇩🇪",
+          "points": "25"
+        },
+        {
+          "position": 3,
+          "name": "K. Orlovskyi",
+          "fullName": "K. Orlovskyi",
+          "countryCode": "UA",
+          "flag": "🇺🇦",
+          "points": "20"
+        }
+      ]
+    },
+    {
+      "id": "248764",
+      "seriesId": "2234",
+      "name": "TATUUS WORLD SERIES BY LLL",
+      "series": "TATUUS WORLD SERIES BY LLL",
+      "status": "finished",
+      "date": "2nd Nov 19:55",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202508101935136898f471aca11.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/248764#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/248764/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "LV",
+          "flag": "🇱🇻",
+          "points": "97"
+        },
+        {
+          "position": 2,
+          "name": "S. Durkac",
+          "fullName": "S. Durkac",
+          "countryCode": "SK",
+          "flag": "🇸🇰",
+          "points": "81"
+        },
+        {
+          "position": 3,
+          "name": "M. Contreras",
+          "fullName": "M. Contreras",
+          "countryCode": "CL",
+          "flag": "🇨🇱",
+          "points": "72"
+        }
+      ]
+    },
+    {
+      "id": "235926",
+      "seriesId": "2156",
+      "name": "VOLVO 122S CUP",
+      "series": "VOLVO 122S CUP",
+      "status": "finished",
+      "date": "10th Jul 17:02",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/2025051310115768231aed4aa6b.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/235926#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/235926/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "LV",
+          "flag": "🇱🇻",
+          "points": "43"
+        },
+        {
+          "position": 2,
+          "name": "H. Kuisti",
+          "fullName": "H. Kuisti",
+          "countryCode": "FI",
+          "flag": "🇫🇮",
+          "points": "37"
+        },
+        {
+          "position": 3,
+          "name": "M. Janak",
+          "fullName": "M. Janak",
+          "countryCode": "CZ",
+          "flag": "🇨🇿",
+          "points": "32"
+        }
+      ]
+    },
+    {
+      "id": "232916",
+      "seriesId": "2120",
+      "name": "VETTE SERIES",
+      "series": "VETTE SERIES",
+      "status": "finished",
+      "date": "30th Jun 18:02",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/20250424140535680a452fa183b.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/232916#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/232916/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "A. Ogurchik",
+          "fullName": "A. Ogurchik",
+          "countryCode": "RU",
+          "flag": "🇷🇺",
+          "points": "27"
+        },
+        {
+          "position": 2,
+          "name": "M. Siodła",
+          "fullName": "M. Siodła",
+          "countryCode": "PL",
+          "flag": "🇵🇱",
+          "points": "18"
+        },
+        {
+          "position": 3,
+          "name": "J. Mendlik",
+          "fullName": "J. Mendlik",
+          "countryCode": "PL",
+          "flag": "🇵🇱",
+          "points": "15"
+        }
+      ]
+    },
+    {
+      "id": "231736",
+      "seriesId": "2110",
+      "name": "FORD ESCORT SERIES",
+      "series": "FORD ESCORT SERIES",
+      "status": "finished",
+      "date": "2nd Jul 19:36",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/2025041617593067fff0029b985.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/231736#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/231736/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "M. Nykänen",
+          "fullName": "M. Nykänen",
+          "countryCode": "FI",
+          "flag": "🇫🇮",
+          "points": "78"
+        },
+        {
+          "position": 2,
+          "name": "H. Kuisti",
+          "fullName": "H. Kuisti",
+          "countryCode": "FI",
+          "flag": "🇫🇮",
+          "points": "68"
+        },
+        {
+          "position": 3,
+          "name": "I. Kängsepp",
+          "fullName": "I. Kängsepp",
+          "countryCode": "EE",
+          "flag": "🇪🇪",
+          "points": "34"
+        }
+      ]
+    },
+    {
+      "id": "231385",
+      "seriesId": "2106",
+      "name": "VOLGA HISTORIC SERIES",
+      "series": "VOLGA HISTORIC SERIES",
+      "status": "finished",
+      "date": "3rd Jun 19:36",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/2025041414231867fd1a566af7e.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/231385#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/231385/standings#/",
+      "top3": []
+    },
+    {
+      "id": "230630",
+      "seriesId": "2095",
+      "name": "FORMULA STUDENT SERIES",
+      "series": "FORMULA STUDENT SERIES",
+      "status": "finished",
+      "date": "8th May 18:30",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/2025040914383767f6866d0daa4.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/230630#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/230630/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "M. Nykänen",
+          "fullName": "M. Nykänen",
+          "countryCode": "FI",
+          "flag": "🇫🇮",
+          "points": "25"
+        },
+        {
+          "position": 2,
+          "name": "S. B. Stattin",
+          "fullName": "S. B. Stattin",
+          "countryCode": "SE",
+          "flag": "🇸🇪",
+          "points": "18"
+        },
+        {
+          "position": 3,
+          "name": "G. Santonicola",
+          "fullName": "G. Santonicola",
+          "countryCode": "IT",
+          "flag": "🇮🇹",
+          "points": "15"
+        }
+      ]
+    },
+    {
+      "id": "231879",
+      "seriesId": "2094",
+      "name": "V8 SUPERCAR SERIES",
+      "series": "V8 SUPERCAR SERIES",
+      "status": "finished",
+      "date": "28th May 17:33",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/20250417161432680128e8a0452.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/231879#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/231879/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "LV",
+          "flag": "🇱🇻",
+          "points": "36"
+        },
+        {
+          "position": 2,
+          "name": "S. B. Stattin",
+          "fullName": "S. B. Stattin",
+          "countryCode": "SE",
+          "flag": "🇸🇪",
+          "points": "25"
+        },
+        {
+          "position": 3,
+          "name": "R. Thomas",
+          "fullName": "R. Thomas",
+          "countryCode": "US",
+          "flag": "🇺🇸",
+          "points": "25"
+        }
+      ]
+    },
+    {
+      "id": "230366",
+      "seriesId": "2085",
+      "name": "FERRARI F2004 SERIES",
+      "series": "FERRARI F2004 SERIES",
+      "status": "finished",
+      "date": "27th Jun 19:47",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/2025040717253767f40a91e28f7.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/230366#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/230366/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "LV",
+          "flag": "🇱🇻",
+          "points": "50"
+        },
+        {
+          "position": 2,
+          "name": "I. Keena",
+          "fullName": "I. Keena",
+          "countryCode": "AR",
+          "flag": "🇦🇷",
+          "points": "43"
+        },
+        {
+          "position": 3,
+          "name": "E. C. Garcia-malea",
+          "fullName": "E. C. Garcia-malea",
+          "countryCode": "ES",
+          "flag": "🇪🇸",
+          "points": "39"
+        }
+      ]
+    },
+    {
+      "id": "230352",
+      "seriesId": "2084",
+      "name": "PORSCHE 944 CUP SERIES",
+      "series": "PORSCHE 944 CUP SERIES",
+      "status": "finished",
+      "date": "27th Jun 17:02",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/2025041716330968012d4590b50.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/230352#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/230352/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "M. Nykänen",
+          "fullName": "M. Nykänen",
+          "countryCode": "FI",
+          "flag": "🇫🇮",
+          "points": "95"
+        },
+        {
+          "position": 2,
+          "name": "W. Rambo",
+          "fullName": "W. Rambo",
+          "countryCode": "AT",
+          "flag": "🇦🇹",
+          "points": "91"
+        },
+        {
+          "position": 3,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "LV",
+          "flag": "🇱🇻",
+          "points": "86"
+        }
+      ]
+    },
+    {
+      "id": "229853",
+      "seriesId": "2075",
+      "name": "BIKERNIEKI CUP",
+      "series": "BIKERNIEKI CUP",
+      "status": "finished",
+      "date": "2nd May 19:33",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/2025040416353467f00a5687f9a.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/229853#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/229853/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "E. Elste",
+          "fullName": "E. Elste",
+          "countryCode": "LV",
+          "flag": "🇱🇻",
+          "points": "0"
+        },
+        {
+          "position": 2,
+          "name": "J. A. Marin",
+          "fullName": "J. A. Marin",
+          "countryCode": "ES",
+          "flag": "🇪🇸",
+          "points": "0"
+        },
+        {
+          "position": 3,
+          "name": "G. Punzi",
+          "fullName": "G. Punzi",
+          "countryCode": "IT",
+          "flag": "🇮🇹",
+          "points": "0"
+        }
+      ]
+    },
+    {
+      "id": "229721",
+      "seriesId": "2071",
+      "name": "LAWNMOWER WORLD CHAMPIOSHIP",
+      "series": "LAWNMOWER WORLD CHAMPIOSHIP",
+      "status": "finished",
+      "date": "1st May 19:28",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/2025040318593367eeda95d5ee4.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/229721#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/229721/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "S. B. Stattin",
+          "fullName": "S. B. Stattin",
+          "countryCode": "SE",
+          "flag": "🇸🇪",
+          "points": "43"
+        },
+        {
+          "position": 2,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "LV",
+          "flag": "🇱🇻",
+          "points": "33"
+        },
+        {
+          "position": 3,
+          "name": "M. Nykänen",
+          "fullName": "M. Nykänen",
+          "countryCode": "FI",
+          "flag": "🇫🇮",
+          "points": "15"
+        }
+      ]
+    },
+    {
+      "id": "229710",
+      "seriesId": "2070",
+      "name": "NASCAR ROAD COURSE SERIES",
+      "series": "NASCAR ROAD COURSE SERIES",
+      "status": "finished",
+      "date": "22nd May 16:56",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/2025040318382467eed5a0a6ecb.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/229710#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/229710/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "LV",
+          "flag": "🇱🇻",
+          "points": "0"
+        },
+        {
+          "position": 2,
+          "name": "G. Frisa",
+          "fullName": "G. Frisa",
+          "countryCode": "IT",
+          "flag": "🇮🇹",
+          "points": "0"
+        },
+        {
+          "position": 3,
+          "name": "G. Cunningham",
+          "fullName": "G. Cunningham",
+          "countryCode": "GB",
+          "flag": "🇬🇧",
+          "points": "0"
+        }
+      ]
+    }
+  ]
 }
