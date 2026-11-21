@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Log into World Sim Series, paginate all Finished Series in /series-manager#/, filter excluded series, open each series' final round standings, and save Top 3 podiums."""
+"""Log into World Sim Series, scrape both Ongoing Series and Finished Series from /series-manager#/, filter excluded series, open each series' latest round standings, and save Top 3 podiums."""
 
 from __future__ import annotations
 
@@ -133,17 +133,20 @@ def login_wss(page) -> bool:
     return True
 
 
-def scrape_visible_finished_series(page) -> list[dict[str, str]]:
-    """Extract all Finished Series cards currently rendered on /series-manager#/."""
+def scrape_visible_series_by_section(page, target_status: str) -> list[dict[str, str]]:
+    """Extract either 'ongoing' (In progress) or 'finished' (Finished) series cards currently visible on /series-manager#/."""
     return page.evaluate(
-        """() => {
+        """(targetStatus) => {
             const headers = Array.from(document.querySelectorAll('h1, h2, h3, h4, div, span'));
+            let ongoingTop = null;
             let finishedTop = null;
             for (const el of headers) {
                 const txt = (el.innerText || '').trim().toUpperCase();
-                if (txt === 'FINISHED SERIES') {
+                if (txt === 'ONGOING SERIES' && ongoingTop === null) {
+                    ongoingTop = el.getBoundingClientRect().top + window.scrollY;
+                }
+                if (txt === 'FINISHED SERIES' && finishedTop === null) {
                     finishedTop = el.getBoundingClientRect().top + window.scrollY;
-                    break;
                 }
             }
 
@@ -162,11 +165,24 @@ def scrape_visible_finished_series(page) -> list[dict[str, str]]:
                 const cardText = (card.innerText || '').trim();
                 const upper = cardText.toUpperCase();
 
-                const inFinishedSection = finishedTop !== null ? (cardTop >= finishedTop - 10) : upper.includes('FINISHED (');
-                if (!inFinishedSection) continue;
-                if (upper.includes('IN PROGRESS') || upper.includes('DRAFT (')) continue;
+                if (upper.includes('DRAFT (')) continue;
+
+                if (targetStatus === 'ongoing') {
+                    const inOngoing = (ongoingTop !== null && finishedTop !== null)
+                        ? (cardTop >= ongoingTop - 10 && cardTop < finishedTop - 10)
+                        : upper.includes('IN PROGRESS');
+                    if (!inOngoing || upper.includes('FINISHED (')) continue;
+                } else {
+                    const inFinished = finishedTop !== null
+                        ? (cardTop >= finishedTop - 10)
+                        : upper.includes('FINISHED (');
+                    if (!inFinished || upper.includes('IN PROGRESS')) continue;
+                }
 
                 seen.add(sid);
+
+                const badgeMatch = /(IN PROGRESS\\s*\\([^)]+\\)|FINISHED\\s*\\([^)]+\\))/i.exec(cardText);
+                const progressBadge = badgeMatch ? badgeMatch[1] : '';
 
                 const lines = cardText
                     .split('\\n')
@@ -175,6 +191,7 @@ def scrape_visible_finished_series(page) -> list[dict[str, str]]:
                         s &&
                         !s.toUpperCase().startsWith('BY ') &&
                         !s.toUpperCase().startsWith('FINISHED') &&
+                        !s.toUpperCase().startsWith('IN PROGRESS') &&
                         s.toUpperCase() !== 'START' &&
                         s.toUpperCase() !== 'END' &&
                         !/^\\d{1,2}(st|nd|rd|th)\\s+[A-Za-z]+/i.test(s)
@@ -204,28 +221,32 @@ def scrape_visible_finished_series(page) -> list[dict[str, str]]:
                 out.push({
                     seriesId: sid,
                     name,
+                    status: targetStatus,
+                    progress: progressBadge,
                     thumbnail: thumb,
                     date: dateLabel
                 });
             }
             return out;
-        }"""
+        }""",
+        target_status,
     )
 
 
-def collect_finished_series_from_manager(page) -> list[dict[str, str]]:
-    """Open /series-manager#/ and click through every pagination page (1, 2, 3, 4...) of FINISHED SERIES."""
+def collect_series_section_from_manager(page, target_status: str) -> list[dict[str, str]]:
+    """Open /series-manager#/ and paginate through every page of either 'ongoing' or 'finished' series."""
     page.goto(SERIES_MANAGER_URL, wait_until="networkidle", timeout=45000)
     page.wait_for_timeout(3000)
 
     all_series: list[dict[str, str]] = []
     seen_ids: set[str] = set()
+    label = "Ongoing Series" if target_status == "ongoing" else "Finished Series"
 
     for page_num in range(1, 30):
         page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
         page.wait_for_timeout(800)
 
-        batch = scrape_visible_finished_series(page)
+        batch = scrape_visible_series_by_section(page, target_status)
         first_id_before = batch[0]["seriesId"] if batch else ""
         new_count = 0
         for item in batch:
@@ -235,18 +256,22 @@ def collect_finished_series_from_manager(page) -> list[dict[str, str]]:
                 all_series.append(item)
                 new_count += 1
 
-        print(f"Finished Series page {page_num}: +{new_count} new series (total {len(all_series)})")
+        print(f"{label} page {page_num}: +{new_count} new series (total {len(all_series)})")
         if new_count == 0 and page_num > 1:
             break
 
         clicked_label = page.evaluate(
-            """(nextNum) => {
+            """({ nextNum, targetStatus }) => {
                 const headers = Array.from(document.querySelectorAll('h1, h2, h3, h4, div, span'));
-                let finishedTop = 0;
+                let ongoingTop = 0;
+                let finishedTop = Infinity;
                 for (const el of headers) {
-                    if ((el.innerText || '').trim().toUpperCase() === 'FINISHED SERIES') {
+                    const txt = (el.innerText || '').trim().toUpperCase();
+                    if (txt === 'ONGOING SERIES' && ongoingTop === 0) {
+                        ongoingTop = el.getBoundingClientRect().top + window.scrollY;
+                    }
+                    if (txt === 'FINISHED SERIES' && finishedTop === Infinity) {
                         finishedTop = el.getBoundingClientRect().top + window.scrollY;
-                        break;
                     }
                 }
 
@@ -254,6 +279,9 @@ def collect_finished_series_from_manager(page) -> list[dict[str, str]]:
                     .filter(el => {
                         if (el.offsetParent === null) return false;
                         const top = el.getBoundingClientRect().top + window.scrollY;
+                        if (targetStatus === 'ongoing') {
+                            return top >= ongoingTop && top < finishedTop;
+                        }
                         return top >= finishedTop;
                     });
 
@@ -281,7 +309,7 @@ def collect_finished_series_from_manager(page) -> list[dict[str, str]]:
                 }
                 return '';
             }""",
-            page_num + 1,
+            {"nextNum": page_num + 1, "targetStatus": target_status},
         )
 
         if not clicked_label:
@@ -308,20 +336,25 @@ def collect_finished_series_from_manager(page) -> list[dict[str, str]]:
     return all_series
 
 
-def find_last_event_id_for_series(page, series_id: str) -> str:
-    """Open /series-manager/<series_id>#/events, expand the last round, and navigate to its /events/<id> page."""
+def find_latest_event_id_for_series(page, series_id: str) -> str:
+    """Open /series-manager/<series_id>#/events and extract the latest completed (or last available) round event ID."""
     events_tab_url = f"https://paddock.worldsimseries.com/series-manager/{series_id}#/events"
-    captured_ids: list[str] = []
+    finished_ids: list[str] = []
+    all_ids: list[str] = []
 
     def scan_obj(obj: Any) -> None:
         if isinstance(obj, dict):
             if any(k in obj for k in ("trackId", "track", "startsAt", "startDate", "roundNumber", "round")):
+                status_str = str(obj.get("status") or obj.get("state") or "").lower()
+                is_done = bool(obj.get("isFinished") or obj.get("finished") or status_str in ("finished", "completed", "ended", "past"))
                 for k in ("eventId", "id"):
                     val = str(obj.get(k, ""))
                     if val.isdigit() and val != str(series_id):
-                        captured_ids.append(val)
+                        all_ids.append(val)
+                        if is_done:
+                            finished_ids.append(val)
             elif "eventId" in obj and str(obj["eventId"]).isdigit():
-                captured_ids.append(str(obj["eventId"]))
+                all_ids.append(str(obj["eventId"]))
             for v in obj.values():
                 scan_obj(v)
         elif isinstance(obj, list):
@@ -342,9 +375,10 @@ def find_last_event_id_for_series(page, series_id: str) -> str:
     finally:
         page.remove_listener("response", on_response)
 
-    if captured_ids:
-        unique_ids = list(dict.fromkeys(captured_ids))
-        return unique_ids[-1]
+    if finished_ids:
+        return list(dict.fromkeys(finished_ids))[-1]
+    if all_ids:
+        return list(dict.fromkeys(all_ids))[-1]
 
     try:
         round_rows = page.locator('text=/ROUND\\s*#?\\s*\\d+/i')
@@ -530,19 +564,38 @@ def main() -> None:
 
         login_wss(page)
 
-        finished_series = collect_finished_series_from_manager(page)
-        print(f"Found {len(finished_series)} finished series across all pages in series-manager.")
+        ongoing_series = collect_series_section_from_manager(page, "ongoing")
+        finished_series = collect_series_section_from_manager(page, "finished")
+        print(f"Found {len(ongoing_series)} ongoing and {len(finished_series)} finished series in series-manager.")
 
-        for s in finished_series:
+        for s in ongoing_series + finished_series:
             clean_title = " ".join(s["name"].upper().split())
             if clean_title in EXCLUDED_SERIES:
                 print(f"Excluding blacklisted series: {s['name']}")
                 continue
 
             sid = s["seriesId"]
-            event_id = find_last_event_id_for_series(page, sid)
+            status = s["status"]
+            event_id = find_latest_event_id_for_series(page, sid)
+
             if not event_id:
-                print(f"Skipping {s['name']} (ID {sid}): no round event ID found.")
+                if status == "ongoing":
+                    series_out.append({
+                        "id": sid,
+                        "seriesId": sid,
+                        "name": s["name"],
+                        "series": s["name"],
+                        "status": "ongoing",
+                        "progress": s.get("progress", ""),
+                        "date": s["date"],
+                        "thumbnail": s["thumbnail"],
+                        "url": f"https://paddock.worldsimseries.com/series-manager/{sid}#/events",
+                        "standingsUrl": f"https://paddock.worldsimseries.com/series-manager/{sid}#/events",
+                        "top3": [],
+                    })
+                    print(f"Loaded ongoing {s['name']} (series {sid}, no round event yet)")
+                else:
+                    print(f"Skipping {s['name']} (ID {sid}): no round event ID found.")
                 continue
 
             top3 = extract_top3_from_event_standings(page, event_id)
@@ -553,14 +606,15 @@ def main() -> None:
                 "seriesId": sid,
                 "name": s["name"],
                 "series": s["name"],
-                "status": "finished",
+                "status": status,
+                "progress": s.get("progress", ""),
                 "date": s["date"],
                 "thumbnail": s["thumbnail"],
                 "url": f"https://paddock.worldsimseries.com/events/{event_id}#/",
                 "standingsUrl": standings_url,
                 "top3": top3,
             })
-            print(f"Loaded {s['name']} -> event {event_id} ({len(top3)} podium entries)")
+            print(f"Loaded [{status}] {s['name']} -> event {event_id} ({len(top3)} podium entries)")
 
         browser.close()
 
@@ -571,7 +625,7 @@ def main() -> None:
         "events": series_out,
     }
     OUT_PATH.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    print(f"Saved {len(series_out)} finished series to {OUT_PATH}")
+    print(f"Saved {len(series_out)} total series to {OUT_PATH}")
 
 
 if __name__ == "__main__":
