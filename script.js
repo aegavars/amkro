@@ -7,6 +7,26 @@ const CONFIG = {
   youtubeChannelId: 'UC-6zSmuerT4LvwzCy7MLNFA',
 };
 
+const EXCLUDED_SERIES = new Set([
+  'NASCAR ROAD COURSE SERIES',
+  'BIKERNIEKI CUP',
+  'FORMULA STUDENT SERIES',
+  'VOLGA HISTORIC SERIES',
+  'VETTE SERIES',
+  'TWS PRE-SEASON TESTING',
+  'LLL DAILY GT3 SERIES',
+  'TWS PRE-SEASON TESTING SPRINT',
+  'TWS OPEN',
+  'LLL COMMUNITY RACE',
+  'TATUUS WORLD SERIES SEASON 3 SPRINT',
+  'GT WORLD TOUR',
+  'TATUUS WORLD SERIES SEASON 4 SPRINT',
+  'TATUUS WORLD SERIES SEASON 4 PRE-QUALIFYING',
+  'FREC CHALLENGE',
+]);
+
+const ARCHIVE_PAGE_SIZE = 9;
+
 const TIMELINE = [
   ['JAN 2023','Team founded','A few friends, one Discord server, one league.'],
   ['APR 2023','First league win','Our first podium on the road to the title.'],
@@ -268,8 +288,18 @@ if(toTop){
   toTop.onclick=()=>scrollTo({top:0});
 }
 
-/* ====== Series Standings (Finished Series + Thumbnails + Series Name + Top 3 + Real Country Flags + N. Surname) ====== */
-let ST = [], stQuery = '';
+/* ====== Series Standings (Latest 3 + Centered SHOW ALL -> 9-per-page Paginated Modal + Blacklist Filter) ====== */
+let ST = [], stQuery = '', archivePage = 1;
+
+function normalizeSeriesName(raw){
+  return String(raw || '').toUpperCase().replace(/\s+/g, ' ').trim();
+}
+
+function isSeriesAllowed(e){
+  const n1 = normalizeSeriesName(e.name);
+  const n2 = normalizeSeriesName(e.series);
+  return !EXCLUDED_SERIES.has(n1) && !EXCLUDED_SERIES.has(n2);
+}
 
 function formatDriverShort(raw){
   const clean = String(raw || '').trim().replace(/\s+/g, ' ');
@@ -317,77 +347,199 @@ function getSeriesTop3(e){
   return [];
 }
 
+function buildStandingCard(e){
+  const card = el('article', 'st-card');
+  const seriesTitle = (e.name && e.name.toUpperCase() !== 'FINISHED') ? e.name : (e.series || 'Series');
+  const standingsHref = e.standingsUrl || e.url || '#';
+
+  const thumbLink = el('a', 'st-card-thumb');
+  thumbLink.href = standingsHref;
+  thumbLink.target = '_blank';
+  thumbLink.rel = 'noopener';
+  thumbLink.setAttribute('aria-label', 'Open full standings for ' + seriesTitle);
+  if(e.thumbnail) thumbLink.style.backgroundImage = `url("${e.thumbnail}")`;
+
+  const body = el('div', 'st-card-body');
+
+  const head = el('div', 'st-card-head');
+  const titleWrap = el('div', 'st-card-title');
+  titleWrap.append(el('span', 'st-series', 'FINISHED SERIES'));
+  titleWrap.append(el('h3', null, seriesTitle));
+  if(e.date) titleWrap.append(el('small', 'muted', e.date));
+  head.append(titleWrap);
+  body.append(head);
+
+  const top3 = getSeriesTop3(e);
+  const podium = el('ol', 'st-podium');
+  if(top3.length){
+    top3.forEach((d, idx) => {
+      const li = el('li', 'podium-row p' + (idx + 1));
+      const pos = el('span', 'podium-pos', 'P' + (idx + 1));
+      const flagEl = buildFlagElement(d.countryCode, d.flag);
+      const driver = el('span', 'podium-driver', d.name);
+      li.append(pos, flagEl, driver);
+      if(d.points !== undefined && d.points !== null && d.points !== ''){
+        li.append(el('span', 'podium-pts', String(d.points) + ' pts'));
+      }
+      podium.append(li);
+    });
+  } else {
+    const empty = el('li', 'podium-row');
+    empty.append(el('span', 'muted', 'Podium results available on full standings page.'));
+    podium.append(empty);
+  }
+  body.append(podium);
+
+  const actions = el('div', 'cta');
+  const fullBtn = el('a', 'btn primary', 'Full standings →');
+  fullBtn.href = standingsHref;
+  fullBtn.target = '_blank';
+  fullBtn.rel = 'noopener';
+  actions.append(fullBtn);
+  body.append(actions);
+
+  card.append(thumbLink, body);
+  return card;
+}
+
+function getAllowedFinishedSeries(){
+  return ST.filter(e => (!e.status || e.status === 'finished') && isSeriesAllowed(e));
+}
+
+function renderArchivePage(page){
+  const items = getAllowedFinishedSeries();
+  const totalPages = Math.max(1, Math.ceil(items.length / ARCHIVE_PAGE_SIZE));
+  archivePage = Math.min(Math.max(1, page), totalPages);
+
+  const grid = $('#stArchiveGrid');
+  const pag = $('#stArchivePagination');
+  if(!grid || !pag) return;
+
+  grid.textContent = '';
+  const start = (archivePage - 1) * ARCHIVE_PAGE_SIZE;
+  items.slice(start, start + ARCHIVE_PAGE_SIZE).forEach(e => {
+    grid.append(buildStandingCard(e));
+  });
+
+  pag.textContent = '';
+  const prevBtn = el('button', 'st-page-btn', '‹');
+  prevBtn.type = 'button';
+  prevBtn.disabled = archivePage === 1;
+  prevBtn.onclick = () => {
+    renderArchivePage(archivePage - 1);
+    const modal = $('#stArchiveModal');
+    if(modal) modal.scrollTop = 0;
+  };
+  pag.append(prevBtn);
+
+  for(let p = 1; p <= totalPages; p++){
+    const btn = el('button', 'st-page-btn' + (p === archivePage ? ' active' : ''), String(p));
+    btn.type = 'button';
+    btn.onclick = () => {
+      renderArchivePage(p);
+      const modal = $('#stArchiveModal');
+      if(modal) modal.scrollTop = 0;
+    };
+    pag.append(btn);
+  }
+
+  const nextBtn = el('button', 'st-page-btn', '›');
+  nextBtn.type = 'button';
+  nextBtn.disabled = archivePage === totalPages;
+  nextBtn.onclick = () => {
+    renderArchivePage(archivePage + 1);
+    const modal = $('#stArchiveModal');
+    if(modal) modal.scrollTop = 0;
+  };
+  pag.append(nextBtn);
+}
+
+function closeStandingsArchive(){
+  const modal = $('#stArchiveModal');
+  if(modal) modal.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function openStandingsArchive(){
+  const items = getAllowedFinishedSeries();
+  let modal = $('#stArchiveModal');
+  if(!modal){
+    modal = el('div', 'st-archive-modal');
+    modal.id = 'stArchiveModal';
+
+    const inner = el('div', 'st-archive-inner');
+    const topbar = el('div', 'st-archive-topbar');
+    const title = el('h2', null, 'ALL FINISHED SERIES (' + items.length + ')');
+    title.id = 'stArchiveTitle';
+    const closeBtn = el('button', 'btn', 'CLOSE ✕');
+    closeBtn.type = 'button';
+    closeBtn.onclick = closeStandingsArchive;
+    topbar.append(title, closeBtn);
+
+    const grid = el('div', 'st-archive-grid');
+    grid.id = 'stArchiveGrid';
+
+    const pag = el('div', 'st-archive-pagination');
+    pag.id = 'stArchivePagination';
+
+    inner.append(topbar, grid, pag);
+    modal.append(inner);
+    document.body.append(modal);
+
+    modal.addEventListener('click', e => {
+      if(e.target === modal) closeStandingsArchive();
+    });
+    document.addEventListener('keydown', e => {
+      if(e.key === 'Escape' && modal.classList.contains('open')) closeStandingsArchive();
+    });
+  } else {
+    const title = $('#stArchiveTitle');
+    if(title) title.textContent = 'ALL FINISHED SERIES (' + items.length + ')';
+  }
+
+  renderArchivePage(1);
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
 function renderStandings(){
   const box = $('#stList');
   if(!box) return;
   box.textContent = '';
 
-  const finished = ST.filter(e => !e.status || e.status === 'finished');
-  const list = finished.filter(e =>
-    (e.name + ' ' + (e.series || '') + ' ' + (e.top3 || []).map(d => d.name).join(' '))
-      .toLowerCase()
-      .includes(stQuery)
-  );
+  const finished = getAllowedFinishedSeries();
+  const filtered = stQuery
+    ? finished.filter(e =>
+        (e.name + ' ' + (e.series || '') + ' ' + (e.top3 || []).map(d => d.name).join(' '))
+          .toLowerCase()
+          .includes(stQuery)
+      )
+    : finished;
 
-  if(!list.length){
+  // Show ONLY the latest 3 when not searching
+  const visible = stQuery ? filtered : filtered.slice(0, 3);
+
+  if(!visible.length){
     box.textContent = finished.length ? 'No finished series match your search.' : 'No finished series loaded yet.';
-    return;
+  } else {
+    visible.forEach(e => box.append(buildStandingCard(e)));
   }
 
-  list.forEach(e => {
-    const card = el('article', 'st-card');
-    const seriesTitle = (e.name && e.name.toUpperCase() !== 'FINISHED') ? e.name : (e.series || 'Series');
-    const standingsHref = e.standingsUrl || e.url || '#';
+  // Centered SHOW ALL button directly below #stList
+  let showAllWrap = $('#stShowAllWrap');
+  if(!showAllWrap){
+    showAllWrap = el('div', 'st-show-all-wrap');
+    showAllWrap.id = 'stShowAllWrap';
+    box.insertAdjacentElement('afterend', showAllWrap);
+  }
+  showAllWrap.textContent = '';
 
-    const thumbLink = el('a', 'st-card-thumb');
-    thumbLink.href = standingsHref;
-    thumbLink.target = '_blank';
-    thumbLink.rel = 'noopener';
-    thumbLink.setAttribute('aria-label', 'Open full standings for ' + seriesTitle);
-    if(e.thumbnail) thumbLink.style.backgroundImage = `url("${e.thumbnail}")`;
-
-    const body = el('div', 'st-card-body');
-
-    const head = el('div', 'st-card-head');
-    const titleWrap = el('div', 'st-card-title');
-    titleWrap.append(el('span', 'st-series', 'FINISHED SERIES'));
-    titleWrap.append(el('h3', null, seriesTitle));
-    if(e.date) titleWrap.append(el('small', 'muted', e.date));
-    head.append(titleWrap);
-    body.append(head);
-
-    const top3 = getSeriesTop3(e);
-    const podium = el('ol', 'st-podium');
-    if(top3.length){
-      top3.forEach((d, idx) => {
-        const li = el('li', 'podium-row p' + (idx + 1));
-        const pos = el('span', 'podium-pos', 'P' + (idx + 1));
-        const flagEl = buildFlagElement(d.countryCode, d.flag);
-        const driver = el('span', 'podium-driver', d.name);
-        li.append(pos, flagEl, driver);
-        if(d.points !== undefined && d.points !== null && d.points !== ''){
-          li.append(el('span', 'podium-pts', String(d.points) + ' pts'));
-        }
-        podium.append(li);
-      });
-    } else {
-      const empty = el('li', 'podium-row');
-      empty.append(el('span', 'muted', 'Podium results available on full standings page.'));
-      podium.append(empty);
-    }
-    body.append(podium);
-
-    const actions = el('div', 'cta');
-    const fullBtn = el('a', 'btn primary', 'Full standings →');
-    fullBtn.href = standingsHref;
-    fullBtn.target = '_blank';
-    fullBtn.rel = 'noopener';
-    actions.append(fullBtn);
-    body.append(actions);
-
-    card.append(thumbLink, body);
-    box.append(card);
-  });
+  if(!stQuery && finished.length > 3){
+    const showAllBtn = el('button', 'btn st-show-all-btn', 'SHOW ALL');
+    showAllBtn.type = 'button';
+    showAllBtn.onclick = openStandingsArchive;
+    showAllWrap.append(showAllBtn);
+  }
 }
 
 if($('#stSearch')){
