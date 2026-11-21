@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-21T20:48:34.053834+00:00",
+  "updated": "2026-11-21T22:40:56.933084+00:00",
   "organizationUrl": "https://paddock.worldsimseries.com/series-manager#/",
   "events": [
     {
@@ -751,27 +751,27 @@
       "top3": [
         {
           "position": 1,
-          "name": "M. Ruginis",
-          "fullName": "M. Ruginis",
-          "countryCode": "LT",
-          "flag": "🇱🇹",
-          "points": "14"
+          "name": "Z. Fuzvolgyi",
+          "fullName": "Z. Fuzvolgyi",
+          "countryCode": "HU",
+          "flag": "🇭🇺",
+          "points": "56"
         },
         {
           "position": 2,
-          "name": "D. Ivannikov",
-          "fullName": "D. Ivannikov",
-          "countryCode": "UA",
-          "flag": "🇺🇦",
-          "points": "12"
+          "name": "M. Janak",
+          "fullName": "M. Janak",
+          "countryCode": "CZ",
+          "flag": "🇨🇿",
+          "points": "44"
         },
         {
           "position": 3,
-          "name": "M. Mativeri",
-          "fullName": "M. Mativeri",
-          "countryCode": "GB",
-          "flag": "🇬🇧",
-          "points": "10"
+          "name": "M. Ruzzante",
+          "fullName": "M. Ruzzante",
+          "countryCode": "AR",
+          "flag": "🇦🇷",
+          "points": "30"
         }
       ]
     },
