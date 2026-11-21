@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Log into World Sim Series, paginate all Finished Series in /series-manager#/, open each series' final round standings, and save Top 3 podiums."""
+"""Log into World Sim Series, paginate all Finished Series in /series-manager#/, filter excluded series, open each series' final round standings, and save Top 3 podiums."""
 
 from __future__ import annotations
 
@@ -14,6 +14,24 @@ from playwright.sync_api import sync_playwright
 LOGIN_URL = "https://paddock.worldsimseries.com/login"
 SERIES_MANAGER_URL = "https://paddock.worldsimseries.com/series-manager#/"
 OUT_PATH = Path(__file__).resolve().parent.parent / "data" / "standings.json"
+
+EXCLUDED_SERIES = {
+    "NASCAR ROAD COURSE SERIES",
+    "BIKERNIEKI CUP",
+    "FORMULA STUDENT SERIES",
+    "VOLGA HISTORIC SERIES",
+    "VETTE SERIES",
+    "TWS PRE-SEASON TESTING",
+    "LLL DAILY GT3 SERIES",
+    "TWS PRE-SEASON TESTING SPRINT",
+    "TWS OPEN",
+    "LLL COMMUNITY RACE",
+    "TATUUS WORLD SERIES SEASON 3 SPRINT",
+    "GT WORLD TOUR",
+    "TATUUS WORLD SERIES SEASON 4 SPRINT",
+    "TATUUS WORLD SERIES SEASON 4 PRE-QUALIFYING",
+    "FREC CHALLENGE",
+}
 
 ALPHA3_TO_2 = {
     "LVA": "LV", "LTU": "LT", "EST": "EE", "DEU": "DE", "GER": "DE",
@@ -221,7 +239,6 @@ def collect_finished_series_from_manager(page) -> list[dict[str, str]]:
         if new_count == 0 and page_num > 1:
             break
 
-        # Click the actual <a> or <button> inside the bottom pagination bar (not the outer <li>)
         clicked_label = page.evaluate(
             """(nextNum) => {
                 const headers = Array.from(document.querySelectorAll('h1, h2, h3, h4, div, span'));
@@ -270,7 +287,6 @@ def collect_finished_series_from_manager(page) -> list[dict[str, str]]:
         if not clicked_label:
             break
 
-        # Wait until Angular swaps the rendered series cards so we don't re-scrape the old page
         if first_id_before:
             try:
                 page.wait_for_function(
@@ -299,7 +315,6 @@ def find_last_event_id_for_series(page, series_id: str) -> str:
 
     def scan_obj(obj: Any) -> None:
         if isinstance(obj, dict):
-            # Look for event objects inside a series schedule/rounds response
             if any(k in obj for k in ("trackId", "track", "startsAt", "startDate", "roundNumber", "round")):
                 for k in ("eventId", "id"):
                     val = str(obj.get(k, ""))
@@ -331,7 +346,6 @@ def find_last_event_id_for_series(page, series_id: str) -> str:
         unique_ids = list(dict.fromkeys(captured_ids))
         return unique_ids[-1]
 
-    # Fallback: expand the last ROUND #N bar in the UI and click the event card inside it
     try:
         round_rows = page.locator('text=/ROUND\\s*#?\\s*\\d+/i')
         cnt = round_rows.count()
@@ -341,7 +355,6 @@ def find_last_event_id_for_series(page, series_id: str) -> str:
             last_round.click()
             page.wait_for_timeout(1500)
 
-        # Check if any /events/<id> link appeared
         eid = page.evaluate(
             """() => {
                 const links = Array.from(document.querySelectorAll('a[href*="/events/"]'));
@@ -354,7 +367,6 @@ def find_last_event_id_for_series(page, series_id: str) -> str:
         if eid:
             return eid
 
-        # Click the expanded event card (containing "BY AMK RACING ORGANIZATION" or "FINISHED") to trigger Angular navigation
         event_card = page.locator('text=/BY AMK RACING ORGANIZATION/i').last
         if event_card.is_visible(timeout=2000):
             event_card.click()
@@ -522,6 +534,11 @@ def main() -> None:
         print(f"Found {len(finished_series)} finished series across all pages in series-manager.")
 
         for s in finished_series:
+            clean_title = " ".join(s["name"].upper().split())
+            if clean_title in EXCLUDED_SERIES:
+                print(f"Excluding blacklisted series: {s['name']}")
+                continue
+
             sid = s["seriesId"]
             event_id = find_last_event_id_for_series(page, sid)
             if not event_id:
