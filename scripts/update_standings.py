@@ -116,7 +116,7 @@ def login_wss(page) -> bool:
 
 
 def scrape_visible_finished_series(page) -> list[dict[str, str]]:
-    """Extract all Finished Series cards visible on the current page of /series-manager#/."""
+    """Extract all Finished Series cards currently rendered on /series-manager#/."""
     return page.evaluate(
         """() => {
             const headers = Array.from(document.querySelectorAll('h1, h2, h3, h4, div, span'));
@@ -124,8 +124,7 @@ def scrape_visible_finished_series(page) -> list[dict[str, str]]:
             for (const el of headers) {
                 const txt = (el.innerText || '').trim().toUpperCase();
                 if (txt === 'FINISHED SERIES') {
-                    const rect = el.getBoundingClientRect();
-                    finishedTop = rect.top + window.scrollY;
+                    finishedTop = el.getBoundingClientRect().top + window.scrollY;
                     break;
                 }
             }
@@ -197,7 +196,7 @@ def scrape_visible_finished_series(page) -> list[dict[str, str]]:
 
 
 def collect_finished_series_from_manager(page) -> list[dict[str, str]]:
-    """Open /series-manager#/ and paginate through every page (1, 2, 3, 4...) of FINISHED SERIES."""
+    """Open /series-manager#/ and click through every pagination page (1, 2, 3, 4...) of FINISHED SERIES."""
     page.goto(SERIES_MANAGER_URL, wait_until="networkidle", timeout=45000)
     page.wait_for_timeout(3000)
 
@@ -206,9 +205,10 @@ def collect_finished_series_from_manager(page) -> list[dict[str, str]]:
 
     for page_num in range(1, 30):
         page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-        page.wait_for_timeout(1000)
+        page.wait_for_timeout(800)
 
         batch = scrape_visible_finished_series(page)
+        first_id_before = batch[0]["seriesId"] if batch else ""
         new_count = 0
         for item in batch:
             sid = item["seriesId"]
@@ -221,8 +221,8 @@ def collect_finished_series_from_manager(page) -> list[dict[str, str]]:
         if new_count == 0 and page_num > 1:
             break
 
-        # Click only pagination buttons located below the FINISHED SERIES header
-        advanced = page.evaluate(
+        # Click the actual <a> or <button> inside the bottom pagination bar (not the outer <li>)
+        clicked_label = page.evaluate(
             """(nextNum) => {
                 const headers = Array.from(document.querySelectorAll('h1, h2, h3, h4, div, span'));
                 let finishedTop = 0;
@@ -233,96 +233,115 @@ def collect_finished_series_from_manager(page) -> list[dict[str, str]]:
                     }
                 }
 
-                const candidates = Array.from(document.querySelectorAll('a, button, li'))
+                const clickables = Array.from(document.querySelectorAll('a, button'))
                     .filter(el => {
                         if (el.offsetParent === null) return false;
                         const top = el.getBoundingClientRect().top + window.scrollY;
                         return top >= finishedTop;
                     });
 
-                for (const el of candidates) {
+                const isDisabled = (el) => {
+                    const cls = (el.className || '').toLowerCase();
+                    const pCls = (el.parentElement && el.parentElement.className || '').toLowerCase();
+                    return cls.includes('disabled') || pCls.includes('disabled') || el.hasAttribute('disabled') || el.getAttribute('aria-disabled') === 'true';
+                };
+
+                for (const el of clickables) {
                     const txt = (el.innerText || '').trim();
-                    if (txt === String(nextNum)) {
-                        const cls = (el.className || '').toLowerCase();
-                        if (!cls.includes('disabled') && !cls.includes('active')) {
-                            el.click();
-                            return true;
-                        }
+                    if (txt === String(nextNum) && !isDisabled(el)) {
+                        el.scrollIntoView({ block: 'center' });
+                        el.click();
+                        return txt;
                     }
                 }
-                for (const el of candidates) {
+                for (const el of clickables) {
                     const txt = (el.innerText || '').trim();
-                    if (txt === '›' || txt === '>') {
-                        const cls = (el.className || '').toLowerCase();
-                        const parentCls = (el.parentElement && el.parentElement.className || '').toLowerCase();
-                        if (!cls.includes('disabled') && !parentCls.includes('disabled') && !el.hasAttribute('disabled')) {
-                            el.click();
-                            return true;
-                        }
+                    if ((txt === '›' || txt === '>' || txt === 'Next') && !isDisabled(el)) {
+                        el.scrollIntoView({ block: 'center' });
+                        el.click();
+                        return txt;
                     }
                 }
-                return false;
+                return '';
             }""",
             page_num + 1,
         )
 
-        if not advanced:
+        if not clicked_label:
             break
 
-        try:
-            page.wait_for_load_state("networkidle", timeout=15000)
-        except Exception:
-            pass
-        page.wait_for_timeout(1500)
+        # Wait until Angular swaps the rendered series cards so we don't re-scrape the old page
+        if first_id_before:
+            try:
+                page.wait_for_function(
+                    """(prevId) => {
+                        const anchors = Array.from(document.querySelectorAll('a[href*="/series-manager/"]'));
+                        const ids = anchors
+                            .map(a => (/\\/series-manager\\/(\\d+)/.exec(a.getAttribute('href') || '') || [])[1])
+                            .filter(Boolean);
+                        return ids.length > 0 && !ids.includes(prevId);
+                    }""",
+                    arg=first_id_before,
+                    timeout=8000,
+                )
+            except Exception:
+                page.wait_for_timeout(2000)
+        else:
+            page.wait_for_timeout(2000)
 
     return all_series
 
 
-def collect_ids_from_json(obj: Any, found: list[str]) -> None:
-    if isinstance(obj, dict):
-        if "id" in obj and any(k in obj for k in ("startDate", "startsAt", "endDate", "track", "trackId", "round", "eventId")):
-            val = str(obj["id"])
-            if val.isdigit() and len(val) >= 5:
-                found.append(val)
-        if "eventId" in obj and str(obj["eventId"]).isdigit():
-            found.append(str(obj["eventId"]))
-        for v in obj.values():
-            collect_ids_from_json(v, found)
-    elif isinstance(obj, list):
-        for item in obj:
-            collect_ids_from_json(item, found)
-
-
 def find_last_event_id_for_series(page, series_id: str) -> str:
-    """Open /series-manager/<series_id>#/events and extract the last round's event ID via XHR or clicking the round card."""
+    """Open /series-manager/<series_id>#/events, expand the last round, and navigate to its /events/<id> page."""
     events_tab_url = f"https://paddock.worldsimseries.com/series-manager/{series_id}#/events"
-    captured_event_ids: list[str] = []
+    captured_ids: list[str] = []
+
+    def scan_obj(obj: Any) -> None:
+        if isinstance(obj, dict):
+            # Look for event objects inside a series schedule/rounds response
+            if any(k in obj for k in ("trackId", "track", "startsAt", "startDate", "roundNumber", "round")):
+                for k in ("eventId", "id"):
+                    val = str(obj.get(k, ""))
+                    if val.isdigit() and val != str(series_id):
+                        captured_ids.append(val)
+            elif "eventId" in obj and str(obj["eventId"]).isdigit():
+                captured_ids.append(str(obj["eventId"]))
+            for v in obj.values():
+                scan_obj(v)
+        elif isinstance(obj, list):
+            for item in obj:
+                scan_obj(item)
 
     def on_response(resp):
         try:
             if resp.status == 200 and "json" in resp.headers.get("content-type", ""):
-                collect_ids_from_json(resp.json(), captured_event_ids)
+                scan_obj(resp.json())
         except Exception:
             pass
 
     page.on("response", on_response)
     try:
         page.goto(events_tab_url, wait_until="networkidle", timeout=35000)
-        page.wait_for_timeout(2000)
+        page.wait_for_timeout(2500)
     finally:
         page.remove_listener("response", on_response)
 
-    if captured_event_ids:
-        unique_ids = list(dict.fromkeys(captured_event_ids))
+    if captured_ids:
+        unique_ids = list(dict.fromkeys(captured_ids))
         return unique_ids[-1]
 
+    # Fallback: expand the last ROUND #N bar in the UI and click the event card inside it
     try:
-        round_bars = page.locator('text=/^ROUND\\s*#\\d+/i')
-        cnt = round_bars.count()
+        round_rows = page.locator('text=/ROUND\\s*#?\\s*\\d+/i')
+        cnt = round_rows.count()
         if cnt > 0:
-            round_bars.nth(cnt - 1).click()
+            last_round = round_rows.nth(cnt - 1)
+            last_round.scroll_into_view_if_needed()
+            last_round.click()
             page.wait_for_timeout(1500)
 
+        # Check if any /events/<id> link appeared
         eid = page.evaluate(
             """() => {
                 const links = Array.from(document.querySelectorAll('a[href*="/events/"]'));
@@ -335,10 +354,11 @@ def find_last_event_id_for_series(page, series_id: str) -> str:
         if eid:
             return eid
 
-        past_card = page.locator('text=/BY AMK RACING ORGANIZATION/i').last
-        if past_card.is_visible(timeout=2000):
-            past_card.click()
-            page.wait_for_url(re.compile(r"/events/\d+"), timeout=15000)
+        # Click the expanded event card (containing "BY AMK RACING ORGANIZATION" or "FINISHED") to trigger Angular navigation
+        event_card = page.locator('text=/BY AMK RACING ORGANIZATION/i').last
+        if event_card.is_visible(timeout=2000):
+            event_card.click()
+            page.wait_for_url(re.compile(r"/events/\d+"), timeout=12000)
             m = re.search(r"/events/(\d+)", page.url)
             if m:
                 return m.group(1)
