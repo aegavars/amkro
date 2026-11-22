@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-22T13:49:43.881123+00:00",
+  "updated": "2026-11-22T23:01:53.846005+00:00",
   "organizationUrl": "https://paddock.worldsimseries.com/series-manager#/",
   "events": [
     {
@@ -97,7 +97,7 @@
       "name": "FORMULA PRELUDE",
       "series": "FORMULA PRELUDE",
       "status": "ongoing",
-      "progress": "In progress (6/8)",
+      "progress": "In progress (7/8)",
       "date": "6th Dec 12:57",
       "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202609270429316ab89bab2cf60.jpeg",
       "url": "https://paddock.worldsimseries.com/events/301590#/",
@@ -109,23 +109,23 @@
           "fullName": "M. Antu",
           "countryCode": "DE",
           "flag": "🇩🇪",
-          "points": "50"
+          "points": "65"
         },
         {
           "position": 2,
+          "name": "M. A. Mayor",
+          "fullName": "M. A. Mayor",
+          "countryCode": "ES",
+          "flag": "🇪🇸",
+          "points": "30"
+        },
+        {
+          "position": 3,
           "name": "A. E. Gavars",
           "fullName": "A. E. Gavars",
           "countryCode": "LV",
           "flag": "🇱🇻",
           "points": "25"
-        },
-        {
-          "position": 3,
-          "name": "T. Bilias",
-          "fullName": "T. Bilias",
-          "countryCode": "GR",
-          "flag": "🇬🇷",
-          "points": "18"
         }
       ]
     },
