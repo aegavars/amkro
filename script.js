@@ -158,7 +158,6 @@ async function loadEvents() {
   upcoming.forEach((ev, idx) => {
     const card = el('article', 'card event-card');
 
-    // Add series banner image at top of card
     const imgUrl = ev.thumbnail || ev.image || ev.banner || findMatchingSeriesBanner(ev.title || ev.name, standingsList);
     const banner = el('div', 'st-banner');
     if (imgUrl) {
@@ -225,12 +224,10 @@ function isOngoingSeries(item) {
 }
 
 function buildRoundsForSeries(s) {
-  // 1. If standings.json already provides a rounds/schedule array, use it directly
   if (Array.isArray(s.rounds) && s.rounds.length) {
     return s.rounds;
   }
 
-  // 2. Otherwise construct round list from progress "(completed/total)" + matching upcoming events
   const match = String(s.progress || '').match(/\((\d+)\s*\/\s*(\d+)\)/);
   const completedCount = match ? parseInt(match[1], 10) : 0;
   const totalCount = match ? parseInt(match[2], 10) : (isOngoingSeries(s) ? 1 : 4);
@@ -870,15 +867,71 @@ async function loadBlog() {
 }
 
 /* ====== Socials Page: Live YouTube Feed & Instagram ====== */
-async function resolveYouTubeChannelId() {
+async function fetchYouTubeVideos(explicitId) {
+  const proxies = [
+    url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+    url => `https://corsproxy.io/?${encodeURIComponent(url)}`
+  ];
+
+  let channelId = explicitId;
+  if (!channelId) {
+    for (const makeProxy of proxies) {
+      try {
+        const res = await fetch(makeProxy('https://www.youtube.com/@AMKRacingOrganisation'));
+        if (!res.ok) continue;
+        const html = await res.text();
+        const match = html.match(/"channelId":"(UC[\w-]{22})"/) || html.match(/channel_id=(UC[\w-]{22})/);
+        if (match) {
+          channelId = match[1];
+          break;
+        }
+      } catch (e) {}
+    }
+  }
+
+  if (!channelId) return [];
+
+  const feedParam = channelId.startsWith('UU') || channelId.startsWith('PL')
+    ? `playlist_id=${channelId}`
+    : `channel_id=${channelId}`;
+  const rawRss = `https://www.youtube.com/feeds/videos.xml?${feedParam}`;
+
   try {
-    const res = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent('https://www.youtube.com/@AMKRacingOrganisation'));
-    const data = await res.json();
-    const html = data?.contents || '';
-    const match = html.match(/"channelId":"(UC[\w-]{22})"/);
-    if (match) return match[1];
+    const apiRes = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rawRss)}`);
+    const apiData = await apiRes.json();
+    if (apiData && Array.isArray(apiData.items) && apiData.items.length) {
+      return apiData.items.map(item => ({
+        title: item.title,
+        url: item.link,
+        thumbnail: item.thumbnail,
+        published: item.pubDate
+      }));
+    }
   } catch (e) {}
-  return '';
+
+  for (const makeProxy of proxies) {
+    try {
+      const res = await fetch(makeProxy(rawRss));
+      if (!res.ok) continue;
+      const text = await res.text();
+      const xml = new DOMParser().parseFromString(text, 'text/xml');
+      const entries = Array.from(xml.querySelectorAll('entry'));
+      if (entries.length) {
+        return entries.map(entry => {
+          const vidId = entry.querySelector('videoId')?.textContent || '';
+          return {
+            id: vidId,
+            title: entry.querySelector('title')?.textContent || 'AMKRO Broadcast',
+            url: entry.querySelector('link')?.getAttribute('href') || `https://www.youtube.com/watch?v=${vidId}`,
+            thumbnail: vidId ? `https://i.ytimg.com/vi/${vidId}/hqdefault.jpg` : '',
+            published: entry.querySelector('published')?.textContent || ''
+          };
+        });
+      }
+    } catch (e) {}
+  }
+
+  return [];
 }
 
 async function loadSocials() {
@@ -886,7 +939,6 @@ async function loadSocials() {
   if (ytGrid) {
     let videos = [];
 
-    // 1. Check local data/youtube.json first
     try {
       const localRes = await fetch('data/youtube.json', { cache: 'no-store' });
       if (localRes.ok) {
@@ -897,50 +949,9 @@ async function loadSocials() {
       videos = [];
     }
 
-    // 2. Otherwise resolve @AMKRacingOrganisation channel ID & fetch its RSS feed
     if (!videos.length) {
       const explicitId = (ytGrid.dataset.channelId || ytGrid.dataset.playlistId || '').trim();
-      const channelId = explicitId || (await resolveYouTubeChannelId());
-
-      if (channelId) {
-        const feedParam = channelId.startsWith('UU') || channelId.startsWith('PL')
-          ? `playlist_id=${channelId}`
-          : `channel_id=${channelId}`;
-        const rawRss = `https://www.youtube.com/feeds/videos.xml?${feedParam}`;
-
-        try {
-          const apiRes = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rawRss)}`);
-          const apiData = await apiRes.json();
-          if (apiData && Array.isArray(apiData.items) && apiData.items.length) {
-            videos = apiData.items.map(item => ({
-              title: item.title,
-              url: item.link,
-              thumbnail: item.thumbnail,
-              published: item.pubDate
-            }));
-          }
-        } catch (e) {}
-
-        if (!videos.length) {
-          try {
-            const proxyRes = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(rawRss)}`);
-            const proxyData = await proxyRes.json();
-            if (proxyData?.contents) {
-              const xml = new DOMParser().parseFromString(proxyData.contents, 'text/xml');
-              videos = Array.from(xml.querySelectorAll('entry')).map(entry => {
-                const vidId = entry.querySelector('videoId')?.textContent || '';
-                return {
-                  id: vidId,
-                  title: entry.querySelector('title')?.textContent || 'AMKRO Broadcast',
-                  url: entry.querySelector('link')?.getAttribute('href') || `https://www.youtube.com/watch?v=${vidId}`,
-                  thumbnail: vidId ? `https://i.ytimg.com/vi/${vidId}/hqdefault.jpg` : '',
-                  published: entry.querySelector('published')?.textContent || ''
-                };
-              });
-            }
-          } catch (e) {}
-        }
-      }
+      videos = await fetchYouTubeVideos(explicitId);
     }
 
     ytGrid.textContent = '';
