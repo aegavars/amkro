@@ -1,519 +1,354 @@
-'use strict';
+/* ==========================================================================
+   AMKRO — AMK Racing Organization
+   Shared Multi-Page Script (Home, Standings, Blog, Socials, About Us)
+   ========================================================================== */
 
-const CONFIG = {
-  nextRace: nextThursdayAt(20, 0),
-  raceDurationHours: 3,
-  youtubeChannelUrl: 'https://www.youtube.com/@AMKRacingOrganisation',
-  youtubeChannelId: 'UC-6zSmuerT4LvwzCy7MLNFA',
-};
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-const EXCLUDED_SERIES = new Set([
-  'NASCAR ROAD COURSE SERIES',
-  'BIKERNIEKI CUP',
-  'FORMULA STUDENT SERIES',
-  'VOLGA HISTORIC SERIES',
-  'VETTE SERIES',
-  'TWS PRE-SEASON TESTING',
-  'LLL DAILY GT3 SERIES',
-  'TWS PRE-SEASON TESTING SPRINT',
-  'TWS OPEN',
-  'LLL COMMUNITY RACE',
-  'TATUUS WORLD SERIES SEASON 3 SPRINT',
-  'GT WORLD TOUR',
-  'TATUUS WORLD SERIES SEASON 4 SPRINT',
-  'TATUUS WORLD SERIES SEASON 4 PRE-QUALIFYING',
-  'FREC CHALLENGE',
-]);
-
-const TIMELINE = [
-  ['JAN 2023','Team founded','A few friends, one Discord server, one league.'],
-  ['APR 2023','First league win','Our first podium on the road to the title.'],
-  ['SEP 2023','Endurance debut','First 6-hour race. Survived.'],
-  ['FEB 2024','New liveries','The burgundy, black and white colours arrive.'],
-  ['JUL 2024','24-hour finish','Completed a full 24 hours with the whole squad.'],
-  ['JAN 2025','Roster expands','More drivers, more cars, more chaos.'],
-  ['OCT 2025','Season champions','Team championship secured.'],
-  ['NOV 2026','This website','You are looking at it.'],
-];
-
-const FAQ = [
-  ['Who is AMKRO?','AMK Racing Organization — a sim racing organization and team.'],
-  ['What do you race?','League nights and endurance events across Assetto Corsa and WSS.'],
-  ['How do I join?','Open the Discord, introduce yourself and join a practice night.'],
-  ['Do I need a wheel?','A wheel and pedals help, but a controller is fine to start.'],
-  ['When are race nights?','Check the Upcoming Races schedule above for all live and scheduled events.'],
-  ['What is a rejuicer?','Nothing here. We call it a pit stop.'],
-];
-
-/* ====== helpers ====== */
-const $ = s => document.querySelector(s);
-const pad = n => String(n).padStart(2,'0');
-function nextThursdayAt(h,m){
-  const d = new Date(); d.setHours(h,m,0,0);
-  const add = (4 - d.getDay() + 7) % 7;
-  d.setDate(d.getDate()+add);
-  return d.toISOString();
-}
-function el(tag, cls, text){
-  const e=document.createElement(tag);
-  if(cls) e.className=cls;
-  if(text!==undefined) e.textContent=text;
-  return e;
+function el(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined && text !== null) node.textContent = text;
+  return node;
 }
 
-/* ====== event countdowns ====== */
-let LIST = [];
-const evDur = e => (e.durationHours||CONFIG.raceDurationHours)*3600e3;
-
-function fmtCd(ms){
-  const d=Math.floor(ms/864e5); ms-=d*864e5;
-  const h=Math.floor(ms/36e5); ms-=h*36e5;
-  const m=Math.floor(ms/6e4); ms-=m*6e4;
-  return `${pad(d)} days : ${pad(h)} hrs : ${pad(m)} min : ${pad(Math.floor(ms/1e3))} sec`;
-}
-
-function tickEvents(){
-  const now=Date.now();
-  document.querySelectorAll('.event').forEach((card,i)=>{
-    const e=LIST[i]; if(!e) return;
-    const start=new Date(e.start).getTime(), end=start+evDur(e);
-    const label=card.querySelector('.ev-label'), cd=card.querySelector('.ev-cd');
-    if(!label || !cd) return;
-    if(now>end){label.textContent='Result'; cd.textContent='Race finished';}
-    else if(now>=start){label.textContent='Racing right now, ends in'; cd.textContent=fmtCd(end-now);}
-    else {label.textContent='Starts in'; cd.textContent=fmtCd(start-now);}
+/* ====== Mobile Nav & Footer Year & Back-to-Top ====== */
+const menuBtn = $('#menuBtn');
+const nav = $('#nav');
+if (menuBtn && nav) {
+  menuBtn.addEventListener('click', () => {
+    const open = nav.classList.toggle('open');
+    menuBtn.setAttribute('aria-expanded', String(open));
   });
 }
 
-function renderEvents(){
-  const box=$('#eventList');
-  if(!box) return;
-  box.textContent='';
-  LIST.forEach((e,i)=>{
-    const past=Date.now()>new Date(e.start).getTime()+evDur(e);
-    const art=el('article','event');
-    const thumb=el('a','event-thumb'); thumb.href=e.url; thumb.target='_blank'; thumb.rel='noopener'; thumb.setAttribute('aria-label','Open race page');
-    if(e.thumbnail) thumb.style.backgroundImage=`url("${e.thumbnail}")`;
-    const body=el('div','event-body');
-    body.append(el('span','tag'+(i?' off':''), past?'Most recent race':(i===0?'Next race':'Upcoming')));
-    body.append(el('h3',null,e.name));
-    body.append(el('p','muted',new Date(e.start).toLocaleString(undefined,{dateStyle:'full',timeStyle:'short'})));
-    if(e.description) body.append(el('p','muted',e.description));
-    const c=el('div','countdown'); c.append(el('span','label ev-label'), el('span','ev-cd'));
-    const cta=el('div','cta'); const go=el('a','btn primary','Go to the race →'); go.href=e.url; go.target='_blank'; go.rel='noopener'; cta.append(go);
-    body.append(c,cta);
-    art.append(thumb,body); box.append(art);
+if ($('#year')) {
+  $('#year').textContent = new Date().getFullYear();
+}
+
+const toTop = $('#toTop');
+if (toTop) {
+  window.addEventListener('scroll', () => {
+    toTop.classList.toggle('show', window.scrollY > 360);
+  });
+  toTop.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 }
 
-async function loadEvents(){
-  const box = $('#eventList');
-  try{
-    const res = await fetch('data/events.json',{cache:'no-store'});
-    const data = await res.json();
-    const all = (data.events||[]).slice().sort((a,b)=>new Date(a.start)-new Date(b.start));
-    const now = Date.now();
-    const upcoming = all.filter(e=>new Date(e.start).getTime()+evDur(e)>=now);
-    LIST = upcoming.length ? upcoming : all.slice(-1);
-    if(!LIST.length){ if(box) box.textContent='No races scheduled yet. Check the Paddock.'; return; }
-    renderEvents();
-    tickEvents();
-  }catch(e){
-    if(box) box.textContent='Open the Paddock for the latest races.';
-  }
-}
+/* ====== Flat Rectangular Country Flag Helper ====== */
+function createRectFlag(flagOrCode) {
+  const raw = String(flagOrCode || '').trim();
+  if (!raw) return null;
 
-/* ====== Instagram (Normal Embeds) ====== */
-async function loadInstagram(){
-  const grid=$('#igGrid');
-  if(!grid) return;
-
-  const handles = ['amkracingorganization', 'teamamkro'];
-  grid.textContent='';
-
-  handles.forEach(handle=>{
-    const wrap = el('div','ig-embed-wrap');
-    const frame = el('iframe');
-    frame.src = 'https://www.instagram.com/' + handle + '/embed/';
-    frame.title = '@' + handle + ' Instagram feed';
-    frame.loading = 'lazy';
-    frame.setAttribute('scrolling','no');
-    frame.setAttribute('allowtransparency','true');
-    wrap.append(frame);
-    grid.append(wrap);
-  });
-}
-
-/* ====== YouTube (3-Card Grid) ====== */
-function extractYtId(v){
-  if(!v) return '';
-  if(typeof v === 'string'){
-    if(/^[\w-]{11}$/.test(v)) return v;
-    const m = /(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/.exec(v);
-    return m ? m[1] : '';
-  }
-  const raw = v.id || v.videoId || v.url || v.link || '';
-  if(/^[\w-]{11}$/.test(raw)) return raw;
-  const m = /(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/.exec(raw);
-  return m ? m[1] : '';
-}
-
-function parseYouTubeXml(xmlText){
-  const xml = new DOMParser().parseFromString(xmlText, 'text/xml');
-  const entries = Array.from(xml.querySelectorAll('entry')).slice(0,3);
-  return entries.map(entry => {
-    const vidNode = entry.getElementsByTagName('yt:videoId')[0] || entry.getElementsByTagName('videoId')[0];
-    const titleNode = entry.querySelector('title');
-    const pubNode = entry.querySelector('published');
-    return {
-      id: vidNode ? vidNode.textContent.trim() : '',
-      title: titleNode ? titleNode.textContent.trim() : '',
-      published: pubNode ? pubNode.textContent.trim() : ''
-    };
-  }).filter(v => extractYtId(v));
-}
-
-async function fetchLiveYouTubeFeed(channelId){
-  if(!channelId || !channelId.startsWith('UC')) return [];
-  const feedUrl = 'https://www.youtube.com/feeds/videos.xml?channel_id=' + encodeURIComponent(channelId);
-  const endpoints = [
-    async () => {
-      const r = await fetch('https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(feedUrl));
-      const list = parseYouTubeXml(await r.text());
-      if(!list.length) throw new Error('empty');
-      return list;
-    },
-    async () => {
-      const r = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(feedUrl));
-      const d = await r.json();
-      if(!d || !Array.isArray(d.items) || !d.items.length) throw new Error('empty');
-      return d.items.slice(0,3).map(it => ({
-        id: extractYtId(it.link || it.guid),
-        title: it.title,
-        published: it.pubDate
-      })).filter(v => v.id);
-    }
-  ];
-  for(const fn of endpoints){
-    try{
-      const res = await fn();
-      if(res && res.length) return res;
-    }catch(e){}
-  }
-  return [];
-}
-
-function renderYouTubeCards(vids, grid){
-  grid.textContent='';
-  vids.slice(0,3).forEach(v=>{
-    const vid = extractYtId(v);
-    if(!vid) return;
-    const item=el('div','yt-item');
-    const wrap=el('div','yt');
-    const f=el('iframe');
-    f.title=v.title||'YouTube video';
-    f.loading='lazy';
-    f.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
-    f.allowFullscreen=true;
-    f.src='https://www.youtube-nocookie.com/embed/'+vid;
-    wrap.append(f);
-    const t=el('a','yt-title',v.title||'Watch on YouTube');
-    t.href='https://www.youtube.com/watch?v='+vid;
-    t.target='_blank';
-    t.rel='noopener';
-    item.append(wrap,t);
-    const pub = v.published || v.pubDate || v.date;
-    if(pub) item.append(el('small','muted',new Date(pub).toLocaleDateString(undefined,{dateStyle:'medium'})));
-    grid.append(item);
-  });
-}
-
-async function loadYouTube(){
-  const grid=$('#ytGrid');
-  const subBtn=$('#ytSubBtn');
-  if(!grid) return;
-
-  let vids = [];
-  let channelUrl = CONFIG.youtubeChannelUrl;
-  let channelId = CONFIG.youtubeChannelId;
-
-  try{
-    const data = await (await fetch('data/youtube.json',{cache:'no-store'})).json();
-    if(data.channelUrl) channelUrl = data.channelUrl;
-    if(data.channelId && data.channelId.startsWith('UC')) channelId = data.channelId;
-    const list = Array.isArray(data) ? data : (data.videos || data.items || []);
-    vids = list.filter(v => extractYtId(v));
-  }catch(e){}
-
-  if(subBtn && channelUrl){
-    subBtn.href = channelUrl.includes('?') ? channelUrl : channelUrl + '?sub_confirmation=1';
+  // Convert Regional Indicator Flag Emoji (e.g. 🇱🇻, 🇫🇷) to ISO 2-letter code
+  const chars = Array.from(raw);
+  let iso = '';
+  if (
+    chars.length === 2 &&
+    chars.every(c => {
+      const cp = c.codePointAt(0);
+      return cp >= 0x1F1E6 && cp <= 0x1F1FF;
+    })
+  ) {
+    iso = chars.map(c => String.fromCharCode(c.codePointAt(0) - 0x1F1E6 + 97)).join('');
+  } else if (/^[a-zA-Z]{2}$/.test(raw)) {
+    iso = raw.toLowerCase();
   }
 
-  const liveVids = await fetchLiveYouTubeFeed(channelId);
-  if(liveVids.length) vids = liveVids;
-
-  if(vids.length){
-    renderYouTubeCards(vids, grid);
-  } else {
-    grid.textContent='';
-    grid.append(el('p','muted','Visit the AMK Racing Organisation YouTube channel to watch the latest uploads.'));
-  }
-}
-
-/* ====== timeline & faq ====== */
-if($('#timeline')) TIMELINE.forEach(([d,t,p])=>{
-  const li=document.createElement('li');
-  const a=document.createElement('div');a.className='date';a.textContent=d;
-  const h=document.createElement('h3');h.textContent=t;
-  const pp=document.createElement('p');pp.textContent=p;
-  li.append(a,h,pp);$('#timeline').append(li);
-});
-
-if($('#faqList')) FAQ.forEach(([q,a])=>{
-  const d=document.createElement('details');
-  const s=document.createElement('summary');s.textContent=q;
-  const p=document.createElement('p');p.textContent=a;
-  d.append(s,p);$('#faqList').append(d);
-});
-
-/* ====== chrome ====== */
-if($('#year')) $('#year').textContent=new Date().getFullYear();
-if($('#menuBtn')) $('#menuBtn').onclick=e=>{const o=$('#nav').classList.toggle('open');e.currentTarget.setAttribute('aria-expanded',o);};
-document.querySelectorAll('#nav a').forEach(a=>a.addEventListener('click',()=>$('#nav').classList.remove('open')));
-const toTop=$('#toTop');
-if(toTop){
-  addEventListener('scroll',()=>toTop.classList.toggle('show',scrollY>600),{passive:true});
-  toTop.onclick=()=>scrollTo({top:0});
-}
-
-/* ====== Series Standings (Ongoing Top 3 + Dropdown, Finished Latest 3 + Dropdown, Unified Search) ====== */
-let ST = [], stQuery = '', ongoingExpanded = false, finishedExpanded = false;
-
-function normalizeSeriesName(raw){
-  return String(raw || '').toUpperCase().replace(/\s+/g, ' ').trim();
-}
-
-function isSeriesAllowed(e){
-  const n1 = normalizeSeriesName(e.name);
-  const n2 = normalizeSeriesName(e.series);
-  return !EXCLUDED_SERIES.has(n1) && !EXCLUDED_SERIES.has(n2);
-}
-
-function formatDriverShort(raw){
-  const clean = String(raw || '').trim().replace(/\s+/g, ' ');
-  if(!clean) return 'Unknown Driver';
-  const parts = clean.split(' ');
-  if(parts.length === 1) return parts[0];
-  return parts[0][0].toUpperCase() + '. ' + parts.slice(1).join(' ');
-}
-
-function normalizeIso2(code){
-  const c = String(code || '').replace(/[^A-Za-z]/g, '').toUpperCase();
-  return c.length === 2 ? c : '';
-}
-
-function buildFlagElement(countryCode, flagEmoji){
-  const wrap = el('span', 'podium-flag');
-  const iso = normalizeIso2(countryCode);
-  if(iso){
+  if (iso) {
     const img = document.createElement('img');
-    img.src = 'https://flagcdn.com/24x18/' + iso.toLowerCase() + '.png';
-    img.alt = iso;
-    img.width = 20;
-    img.height = 15;
+    img.className = 'rect-flag';
+    img.src = `https://flagcdn.com/w40/${iso}.png`;
+    img.alt = iso.toUpperCase();
     img.loading = 'lazy';
-    img.onerror = () => {
-      wrap.textContent = flagEmoji || iso;
-    };
-    wrap.append(img);
-  } else {
-    wrap.textContent = flagEmoji || '🏁';
-  }
-  return wrap;
-}
-
-function getSeriesTop3(e){
-  if(Array.isArray(e.top3) && e.top3.length){
-    return e.top3.slice(0, 3).map((d, idx) => ({
-      pos: d.position || (idx + 1),
-      countryCode: d.countryCode || d.country || '',
-      flag: d.flag || '',
-      name: d.name ? (d.name.includes('.') ? d.name : formatDriverShort(d.name)) : formatDriverShort(d.fullName),
-      points: d.points
-    }));
-  }
-  return [];
-}
-
-function buildStandingCard(e){
-  const isOngoing = e.status === 'ongoing';
-  const card = el('article', 'st-card' + (isOngoing ? ' is-ongoing' : ''));
-  const seriesTitle = (e.name && e.name.toUpperCase() !== 'FINISHED') ? e.name : (e.series || 'Series');
-  const standingsHref = e.standingsUrl || e.url || '#';
-
-  const thumbLink = el('a', 'st-card-thumb');
-  thumbLink.href = standingsHref;
-  thumbLink.target = '_blank';
-  thumbLink.rel = 'noopener';
-  thumbLink.setAttribute('aria-label', 'Open standings for ' + seriesTitle);
-  if(e.thumbnail) thumbLink.style.backgroundImage = `url("${e.thumbnail}")`;
-
-  const body = el('div', 'st-card-body');
-
-  const head = el('div', 'st-card-head');
-  const titleWrap = el('div', 'st-card-title');
-  const badgeText = isOngoing
-    ? (e.progress ? e.progress.toUpperCase() : 'ONGOING SERIES')
-    : 'FINISHED SERIES';
-  titleWrap.append(el('span', 'st-series' + (isOngoing ? ' ongoing' : ''), badgeText));
-  titleWrap.append(el('h3', null, seriesTitle));
-  if(e.date) titleWrap.append(el('small', 'muted', e.date));
-  head.append(titleWrap);
-  body.append(head);
-
-  const top3 = getSeriesTop3(e);
-  const podium = el('ol', 'st-podium');
-  if(top3.length){
-    top3.forEach((d, idx) => {
-      const li = el('li', 'podium-row p' + (idx + 1));
-      const pos = el('span', 'podium-pos', 'P' + (idx + 1));
-      const flagEl = buildFlagElement(d.countryCode, d.flag);
-      const driver = el('span', 'podium-driver', d.name);
-      li.append(pos, flagEl, driver);
-      if(d.points !== undefined && d.points !== null && d.points !== ''){
-        li.append(el('span', 'podium-pts', String(d.points) + ' pts'));
-      }
-      podium.append(li);
-    });
-  } else {
-    const empty = el('li', 'podium-row');
-    empty.append(el('span', 'muted', isOngoing ? 'Standings update after Round 1.' : 'Podium results available on full standings page.'));
-    podium.append(empty);
-  }
-  body.append(podium);
-
-  const actions = el('div', 'cta');
-  const fullBtn = el('a', 'btn primary', 'Full standings →');
-  fullBtn.href = standingsHref;
-  fullBtn.target = '_blank';
-  fullBtn.rel = 'noopener';
-  actions.append(fullBtn);
-  body.append(actions);
-
-  card.append(thumbLink, body);
-  return card;
-}
-
-function matchesSearch(e, q){
-  if(!q) return true;
-  const hay = (
-    (e.name || '') + ' ' +
-    (e.series || '') + ' ' +
-    (e.progress || '') + ' ' +
-    (e.top3 || []).map(d => d.name).join(' ')
-  ).toLowerCase();
-  return hay.includes(q);
-}
-
-function buildGroupBlock(headingText, items, expanded, onToggle){
-  const group = el('div', 'st-group');
-
-  const header = el('div', 'st-group-header');
-  header.append(el('h3', 'st-group-title', headingText));
-  header.append(el('span', 'st-group-count', items.length + ' SERIES'));
-  group.append(header);
-
-  const grid = el('div', 'st-cards-grid');
-  const visible = (stQuery || expanded) ? items : items.slice(0, 3);
-  visible.forEach(e => grid.append(buildStandingCard(e)));
-  group.append(grid);
-
-  if(!stQuery && items.length > 3){
-    const remaining = items.length - 3;
-    const dropWrap = el('div', 'st-dropdown-wrap');
-    const toggleBtn = el(
-      'button',
-      'btn st-dropdown-btn',
-      expanded ? 'SHOW LESS ▲' : `SHOW ALL ${items.length} (+${remaining} MORE) ▼`
-    );
-    toggleBtn.type = 'button';
-    toggleBtn.onclick = onToggle;
-    dropWrap.append(toggleBtn);
-    group.append(dropWrap);
+    return img;
   }
 
-  return group;
+  return el('span', 'st-flag-text', raw);
 }
 
-function renderStandings(){
-  const box = $('#stList');
-  if(!box) return;
-  box.textContent = '';
+/* ====== Home Page: Upcoming Races & Live Countdowns ====== */
+function formatCountdown(ms) {
+  if (ms <= 0) return 'LIVE / STARTED';
+  const totalSec = Math.floor(ms / 1000);
+  const d = Math.floor(totalSec / 86400);
+  const h = Math.floor((totalSec % 86400) / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  const pad = n => String(n).padStart(2, '0');
+  return `Starts in ${pad(d)} days : ${pad(h)} hrs : ${pad(m)} min : ${pad(s)} sec`;
+}
 
-  const allowed = ST.filter(isSeriesAllowed);
-  const ongoing = allowed.filter(e => e.status === 'ongoing' && matchesSearch(e, stQuery));
-  const finished = allowed.filter(e => e.status !== 'ongoing' && matchesSearch(e, stQuery));
+async function loadEvents() {
+  const listEl = $('#eventList');
+  if (!listEl) return;
 
-  if(!ongoing.length && !finished.length){
-    box.textContent = allowed.length ? 'No series match your search.' : 'No series loaded yet.';
+  let events = [];
+  try {
+    const res = await fetch('data/events.json', { cache: 'no-store' });
+    const data = await res.json();
+    events = Array.isArray(data) ? data : (data.events || []);
+  } catch (e) {
+    events = [];
+  }
+
+  const now = Date.now();
+  const upcoming = events
+    .filter(ev => {
+      const t = new Date(ev.date || ev.start || 0).getTime();
+      return !Number.isNaN(t) && t >= now - 3600 * 1000;
+    })
+    .sort((a, b) => new Date(a.date || a.start) - new Date(b.date || b.start));
+
+  listEl.textContent = '';
+  if (!upcoming.length) {
+    listEl.append(el('p', 'muted', 'No upcoming races scheduled right now. Check World Sim Series for new rounds.'));
     return;
   }
 
-  if(ongoing.length){
-    box.append(
-      buildGroupBlock('ONGOING SERIES', ongoing, ongoingExpanded, () => {
-        ongoingExpanded = !ongoingExpanded;
-        renderStandings();
-      })
-    );
-  }
+  const countdownNodes = [];
 
-  if(finished.length){
-    box.append(
-      buildGroupBlock('FINISHED SERIES', finished, finishedExpanded, () => {
-        finishedExpanded = !finishedExpanded;
-        renderStandings();
-      })
-    );
+  upcoming.forEach((ev, idx) => {
+    const card = el('article', 'card');
+    card.append(el('span', 'badge', idx === 0 ? 'Next race' : 'Upcoming'));
+    card.append(el('h3', null, ev.title || ev.name || 'AMKRO Event'));
+
+    const startMs = new Date(ev.date || ev.start).getTime();
+    if (!Number.isNaN(startMs)) {
+      const dateText = new Date(startMs).toLocaleString(undefined, {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+      });
+      card.append(el('p', 'muted', dateText));
+
+      const cd = el('div', 'countdown', formatCountdown(startMs - Date.now()));
+      card.append(cd);
+      countdownNodes.push({ el: cd, target: startMs });
+    }
+
+    const actions = el('div', 'cta');
+    const link = el('a', 'btn', 'GO TO THE RACE →');
+    link.href = ev.url || 'https://paddock.worldsimseries.com/';
+    link.target = '_blank';
+    link.rel = 'noopener';
+    actions.append(link);
+    card.append(actions);
+
+    listEl.append(card);
+  });
+
+  if (countdownNodes.length) {
+    setInterval(() => {
+      const t = Date.now();
+      countdownNodes.forEach(item => {
+        item.el.textContent = formatCountdown(item.target - t);
+      });
+    }, 1000);
   }
 }
 
-if($('#stSearch')){
-  $('#stSearch').addEventListener('input', e => {
-    stQuery = e.target.value.trim().toLowerCase();
+/* ====== Series Standings (Ongoing & Finished, 3-Card Limit + Dropdown) ====== */
+let ALL_STANDINGS = [];
+let stQuery = '';
+let stFilter = 'ALL';
+let showAllOngoing = false;
+let showAllFinished = false;
+
+function isOngoingSeries(item) {
+  const status = String(item.status || item.badge || '').toUpperCase();
+  if (status.includes('FINISH') || status.includes('COMPLETED') || status.includes('ENDED')) {
+    return false;
+  }
+  return true;
+}
+
+function buildStandingCard(s) {
+  const card = el('article', 'st-card');
+
+  const banner = el('div', 'st-banner');
+  if (s.banner || s.image) {
+    banner.style.backgroundImage = `url("${s.banner || s.image}")`;
+  }
+  card.append(banner);
+
+  const body = el('div', 'st-body');
+  const badgeText = s.status || (isOngoingSeries(s) ? 'IN PROGRESS' : 'FINISHED');
+  body.append(el('span', 'st-series', badgeText));
+  body.append(el('h3', null, s.series || s.title || 'AMKRO Series'));
+
+  if (s.meta || s.updated) {
+    body.append(el('div', 'st-meta', s.meta || s.updated));
+  }
+
+  const podium = Array.isArray(s.podium) ? s.podium : (Array.isArray(s.top3) ? s.top3 : []);
+  if (podium.length) {
+    const ul = el('ul', 'st-podium');
+    podium.slice(0, 3).forEach((row, idx) => {
+      const li = el('li');
+      li.append(el('span', 'st-pos', row.pos || `P${idx + 1}`));
+
+      const driverWrap = el('span', 'st-driver');
+      const flagNode = createRectFlag(row.flag || row.country);
+      if (flagNode) driverWrap.append(flagNode);
+      driverWrap.append(el('span', null, row.driver || row.name || 'TBD'));
+      li.append(driverWrap);
+
+      const ptsVal = row.points !== undefined ? `${row.points} pts` : (row.pts || '');
+      li.append(el('span', 'st-pts', ptsVal));
+      ul.append(li);
+    });
+    body.append(ul);
+  } else {
+    body.append(el('p', 'muted', 'Standings update after Round 1.'));
+  }
+
+  const actions = el('div', 'cta');
+  const btn = el('a', 'btn', 'FULL STANDINGS →');
+  btn.href = s.url || 'https://paddock.worldsimseries.com/';
+  btn.target = '_blank';
+  btn.rel = 'noopener';
+  actions.append(btn);
+  body.append(actions);
+
+  card.append(body);
+  return card;
+}
+
+function renderStandings() {
+  const container = $('#stList');
+  if (!container) return;
+  container.textContent = '';
+
+  const filtered = ALL_STANDINGS.filter(item => {
+    if (stFilter === 'ONGOING' && !isOngoingSeries(item)) return false;
+    if (stFilter === 'FINISHED' && isOngoingSeries(item)) return false;
+    if (!stQuery) return true;
+
+    const podiumText = (item.podium || item.top3 || [])
+      .map(p => `${p.driver || ''} ${p.name || ''}`)
+      .join(' ');
+    const hay = `${item.series || ''} ${item.title || ''} ${item.status || ''} ${podiumText}`.toLowerCase();
+    return hay.includes(stQuery);
+  });
+
+  if (!filtered.length) {
+    container.append(el('p', 'muted', 'No matching series or drivers found.'));
+    return;
+  }
+
+  const ongoing = filtered.filter(isOngoingSeries);
+  const finished = filtered.filter(s => !isOngoingSeries(s));
+
+  function appendGroup(title, items, expanded, onToggle) {
+    if (!items.length) return;
+    const section = el('div', 'st-group');
+
+    const header = el('div', 'st-group-header');
+    header.append(el('h3', 'st-group-title', title));
+    header.append(el('span', 'st-count', `${items.length} SERIES`));
+    section.append(header);
+
+    const grid = el('div', 'cards');
+    const visible = (stQuery || expanded) ? items : items.slice(0, 3);
+    visible.forEach(item => grid.append(buildStandingCard(item)));
+    section.append(grid);
+
+    if (!stQuery && items.length > 3) {
+      const wrap = el('div', 'st-dropdown-wrap');
+      const btn = el(
+        'button',
+        'btn st-dropdown-btn',
+        expanded ? 'SHOW LESS ▲' : `SHOW ALL ${items.length} SERIES ▼`
+      );
+      btn.type = 'button';
+      btn.onclick = onToggle;
+      wrap.append(btn);
+      section.append(wrap);
+    }
+
+    container.append(section);
+  }
+
+  appendGroup('ONGOING SERIES', ongoing, showAllOngoing, () => {
+    showAllOngoing = !showAllOngoing;
+    renderStandings();
+  });
+
+  appendGroup('FINISHED SERIES', finished, showAllFinished, () => {
+    showAllFinished = !showAllFinished;
     renderStandings();
   });
 }
 
-async function loadStandings(){
-  const chips = $('#stChips');
-  if(chips) chips.style.display = 'none';
-  try{
-    const data = await (await fetch('data/standings.json', {cache: 'no-store'})).json();
-    ST = data.events || [];
-    if(data.updated && $('#stUpdated')){
-      $('#stUpdated').textContent = 'Updated ' + new Date(data.updated).toLocaleString(undefined, {dateStyle: 'medium', timeStyle: 'short'}) + '.';
+async function loadStandings() {
+  const container = $('#stList');
+  if (!container) return;
+
+  try {
+    const res = await fetch('data/standings.json', { cache: 'no-store' });
+    const data = await res.json();
+    ALL_STANDINGS = Array.isArray(data) ? data : (data.standings || data.series || []);
+
+    if ($('#stUpdated') && data.updated) {
+      const d = new Date(data.updated);
+      if (!Number.isNaN(d.getTime())) {
+        $('#stUpdated').textContent = `Updated ${d.toLocaleString(undefined, {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit'
+        })}.`;
+      }
     }
-  }catch(e){
-    ST = [];
+  } catch (e) {
+    ALL_STANDINGS = [];
   }
+
+  const chipsWrap = $('#stChips');
+  if (chipsWrap) {
+    chipsWrap.textContent = '';
+    [
+      { id: 'ALL', label: 'ALL SERIES' },
+      { id: 'ONGOING', label: 'ONGOING' },
+      { id: 'FINISHED', label: 'FINISHED' }
+    ].forEach(c => {
+      const chip = el('button', `chip${stFilter === c.id ? ' active' : ''}`, c.label);
+      chip.type = 'button';
+      chip.onclick = () => {
+        stFilter = c.id;
+        $$('.chip', chipsWrap).forEach(b => b.classList.remove('active'));
+        chip.classList.add('active');
+        renderStandings();
+      };
+      chipsWrap.append(chip);
+    });
+  }
+
+  if ($('#stSearch')) {
+    $('#stSearch').addEventListener('input', e => {
+      stQuery = e.target.value.trim().toLowerCase();
+      renderStandings();
+    });
+  }
+
   renderStandings();
 }
 
-/* ====== Initialize feeds ====== */
-loadEvents();
-loadInstagram();
-loadYouTube();
-loadStandings();
-setInterval(tickEvents, 1000);
-tickEvents();
-
 /* ====== Blog / Newsroom (Powered by Pages CMS -> data/blog.json) ====== */
-let BLOG_POSTS = [], blogQuery = '', blogExpanded = false;
+let BLOG_POSTS = [];
+let blogQuery = '';
+let blogExpanded = false;
 
-function openBlogReader(post){
+function openBlogReader(post) {
   let modal = $('#blogModal');
-  if(!modal){
+  if (!modal) {
     modal = el('div', 'blog-modal');
     modal.id = 'blogModal';
 
@@ -543,10 +378,10 @@ function openBlogReader(post){
     document.body.append(modal);
 
     modal.addEventListener('click', e => {
-      if(e.target === modal) closeBlogReader();
+      if (e.target === modal) closeBlogReader();
     });
     document.addEventListener('keydown', e => {
-      if(e.key === 'Escape' && modal.classList.contains('open')) closeBlogReader();
+      if (e.key === 'Escape' && modal.classList.contains('open')) closeBlogReader();
     });
   }
 
@@ -554,13 +389,13 @@ function openBlogReader(post){
   $('#blogModalTitle').textContent = post.title || 'Untitled Post';
 
   const dateStr = post.date
-    ? new Date(post.date).toLocaleDateString(undefined, {dateStyle: 'long'})
+    ? new Date(post.date).toLocaleDateString(undefined, { dateStyle: 'long' })
     : '';
   const byline = [dateStr, post.author ? 'By ' + post.author : ''].filter(Boolean).join(' • ');
   $('#blogModalMeta').textContent = byline;
 
   const coverEl = $('#blogModalCover');
-  if(post.image){
+  if (post.image) {
     coverEl.style.display = 'block';
     coverEl.style.backgroundImage = `url("${post.image}")`;
   } else {
@@ -569,12 +404,12 @@ function openBlogReader(post){
 
   const bodyEl = $('#blogModalBody');
   const raw = String(post.body || '');
-  if(/<[a-z][\s\S]*>/i.test(raw)){
+  if (/<[a-z][\s\S]*>/i.test(raw)) {
     bodyEl.innerHTML = raw;
   } else {
     bodyEl.textContent = '';
     raw.split(/\n{2,}/).forEach(para => {
-      if(para.trim()) bodyEl.append(el('p', null, para.trim()));
+      if (para.trim()) bodyEl.append(el('p', null, para.trim()));
     });
   }
 
@@ -582,26 +417,26 @@ function openBlogReader(post){
   document.body.style.overflow = 'hidden';
 }
 
-function closeBlogReader(){
+function closeBlogReader() {
   const modal = $('#blogModal');
-  if(modal) modal.classList.remove('open');
+  if (modal) modal.classList.remove('open');
   document.body.style.overflow = '';
 }
 
-function renderBlog(){
+function renderBlog() {
   const grid = $('#blogGrid');
-  if(!grid) return;
+  if (!grid) return;
   grid.textContent = '';
 
   const filtered = blogQuery
     ? BLOG_POSTS.filter(p =>
-        ((p.title || '') + ' ' + (p.category || '') + ' ' + (p.author || '') + ' ' + (p.excerpt || ''))
+        `${p.title || ''} ${p.category || ''} ${p.author || ''} ${p.excerpt || ''}`
           .toLowerCase()
           .includes(blogQuery)
       )
     : BLOG_POSTS;
 
-  if(!filtered.length){
+  if (!filtered.length) {
     grid.append(el('p', 'muted', BLOG_POSTS.length ? 'No articles match your search.' : 'No articles published yet.'));
     return;
   }
@@ -611,14 +446,14 @@ function renderBlog(){
     const card = el('article', 'blog-card');
 
     const thumb = el('div', 'blog-card-thumb');
-    if(post.image) thumb.style.backgroundImage = `url("${post.image}")`;
+    if (post.image) thumb.style.backgroundImage = `url("${post.image}")`;
     thumb.onclick = () => openBlogReader(post);
 
     const body = el('div', 'blog-card-body');
     const metaRow = el('div', 'blog-card-meta');
     metaRow.append(el('span', 'st-series', (post.category || 'NEWS').toUpperCase()));
-    if(post.date){
-      metaRow.append(el('small', 'muted', new Date(post.date).toLocaleDateString(undefined, {dateStyle: 'medium'})));
+    if (post.date) {
+      metaRow.append(el('small', 'muted', new Date(post.date).toLocaleDateString(undefined, { dateStyle: 'medium' })));
     }
 
     const title = el('h3', null, post.title || 'Untitled');
@@ -638,14 +473,14 @@ function renderBlog(){
   });
 
   let wrap = $('#blogToggleWrap');
-  if(!wrap){
+  if (!wrap) {
     wrap = el('div', 'st-dropdown-wrap');
     wrap.id = 'blogToggleWrap';
     grid.insertAdjacentElement('afterend', wrap);
   }
   wrap.textContent = '';
 
-  if(!blogQuery && filtered.length > 6){
+  if (!blogQuery && filtered.length > 6) {
     const btn = el(
       'button',
       'btn st-dropdown-btn',
@@ -660,24 +495,162 @@ function renderBlog(){
   }
 }
 
-if($('#blogSearch')){
-  $('#blogSearch').addEventListener('input', e => {
-    blogQuery = e.target.value.trim().toLowerCase();
-    renderBlog();
-  });
-}
-
-async function loadBlog(){
+async function loadBlog() {
   const grid = $('#blogGrid');
-  if(!grid) return;
-  try{
-    const data = await (await fetch('data/blog.json', {cache: 'no-store'})).json();
+  if (!grid) return;
+
+  try {
+    const data = await (await fetch('data/blog.json', { cache: 'no-store' })).json();
     const list = Array.isArray(data) ? data : (data.posts || []);
     BLOG_POSTS = list.slice().sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
-  }catch(e){
+  } catch (e) {
     BLOG_POSTS = [];
   }
+
+  if ($('#blogSearch')) {
+    $('#blogSearch').addEventListener('input', e => {
+      blogQuery = e.target.value.trim().toLowerCase();
+      renderBlog();
+    });
+  }
+
   renderBlog();
 }
 
+/* ====== Socials Page: YouTube & Instagram ====== */
+async function loadSocials() {
+  const ytGrid = $('#ytGrid');
+  if (ytGrid) {
+    try {
+      const data = await (await fetch('data/youtube.json', { cache: 'no-store' })).json();
+      const videos = Array.isArray(data) ? data : (data.videos || data.items || []);
+      ytGrid.textContent = '';
+      if (!videos.length) {
+        ytGrid.append(el('p', 'muted', 'Visit our YouTube channel for live race broadcasts and highlights.'));
+      } else {
+        videos.slice(0, 6).forEach(v => {
+          const card = el('a', 'yt-card');
+          card.href = v.url || (v.id ? `https://www.youtube.com/watch?v=${v.id}` : 'https://www.youtube.com/@AMKRacingOrganisation');
+          card.target = '_blank';
+          card.rel = 'noopener';
+
+          if (v.thumbnail || v.id) {
+            const img = el('img', 'yt-thumb');
+            img.src = v.thumbnail || `https://i.ytimg.com/vi/${v.id}/hqdefault.jpg`;
+            img.alt = v.title || 'YouTube Video';
+            img.loading = 'lazy';
+            card.append(img);
+          }
+
+          const info = el('div', 'yt-info');
+          info.append(el('h3', null, v.title || 'AMKRO Broadcast'));
+          if (v.published || v.date) {
+            info.append(el('small', 'muted', new Date(v.published || v.date).toLocaleDateString(undefined, { dateStyle: 'medium' })));
+          }
+          card.append(info);
+          ytGrid.append(card);
+        });
+      }
+    } catch (e) {
+      ytGrid.textContent = '';
+      ytGrid.append(el('p', 'muted', 'Watch live race streams and replays on @AMKRacingOrganisation.'));
+    }
+  }
+
+  const igGrid = $('#igGrid');
+  if (igGrid) {
+    const accounts = [
+      {
+        handle: '@amkracingorganization',
+        role: 'OFFICIAL LEAGUE & CHAMPIONSHIP UPDATES',
+        desc: 'Race calendars, championship standings, stewarding announcements, and event posters.',
+        url: 'https://www.instagram.com/amkracingorganization/'
+      },
+      {
+        handle: '@teamamkro',
+        role: 'AMKRO ESPORTS & ENDURANCE TEAM',
+        desc: 'Team liveries, endurance driver lineups, onboard highlights, and behind-the-scenes updates.',
+        url: 'https://www.instagram.com/teamamkro/'
+      }
+    ];
+    igGrid.textContent = '';
+    accounts.forEach(acc => {
+      const card = el('a', 'ig-card');
+      card.href = acc.url;
+      card.target = '_blank';
+      card.rel = 'noopener';
+
+      const info = el('div', 'ig-info');
+      info.append(el('span', 'st-series', 'INSTAGRAM'));
+      info.append(el('h3', null, acc.handle));
+      info.append(el('p', 'muted', acc.role));
+      info.append(el('p', null, acc.desc));
+      card.append(info);
+      igGrid.append(card);
+    });
+  }
+}
+
+/* ====== About Us Page: Team History & FAQ ====== */
+function loadAbout() {
+  const timeline = $('#timeline');
+  if (timeline) {
+    const milestones = [
+      {
+        title: 'FOUNDATION OF AMK RACING ORGANIZATION',
+        text: 'Established to bring structured, clean, and competitive sim racing championships to Assetto Corsa on World Sim Series.'
+      },
+      {
+        title: 'MULTI-CLASS & ENDURANCE EXPANSION',
+        text: 'Launched flagship endurance and multi-class championships featuring live broadcast coverage and custom stewarding.'
+      },
+      {
+        title: 'TEAM AMKRO & INTERNATIONAL GRID',
+        text: 'Grew into an international community of drivers competing across touring cars, GT endurance, historic DTM, and formula series.'
+      }
+    ];
+    timeline.textContent = '';
+    milestones.forEach(m => {
+      const li = el('li');
+      li.append(el('h3', null, m.title));
+      li.append(el('p', 'muted', m.text));
+      timeline.append(li);
+    });
+  }
+
+  const faqList = $('#faqList');
+  if (faqList) {
+    const faqs = [
+      {
+        q: 'HOW DO I JOIN AN AMKRO CHAMPIONSHIP OR RACE?',
+        a: 'Create a free account on World Sim Series (paddock.worldsimseries.com), open any upcoming AMKRO event from our Home or Standings page, and register with your required car and skin.'
+      },
+      {
+        q: 'WHAT SIMULATOR DO YOU RACE ON?',
+        a: 'All AMKRO championships are hosted on Assetto Corsa via World Sim Series with automated server entry, live timing, and official championship standings.'
+      },
+      {
+        q: 'WHERE CAN I WATCH LIVE RACES AND HIGHLIGHTS?',
+        a: 'Select rounds and endurance events are streamed live on our official YouTube channel (@AMKRacingOrganisation), with updates posted on Instagram.'
+      },
+      {
+        q: 'ARE BEGINNERS WELCOME TO COMPETE?',
+        a: 'Yes. We welcome drivers of all experience levels as long as you race cleanly, respect blue flags, and follow the event briefing rules.'
+      }
+    ];
+    faqList.textContent = '';
+    faqs.forEach(item => {
+      const details = el('details');
+      details.append(el('summary', null, item.q));
+      details.append(el('p', null, item.a));
+      faqList.append(details);
+    });
+  }
+}
+
+/* ====== Initialize Active Page Modules ====== */
+loadEvents();
+loadStandings();
 loadBlog();
+loadSocials();
+loadAbout();
