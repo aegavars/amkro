@@ -165,15 +165,12 @@ function createFlipDigit(initialChar) {
       const prevChar = this.current;
       this.current = nextChar;
 
-      // Top static half reveals the new digit underneath as the flap drops
       topSpan.textContent = nextChar;
-      // Bottom static half holds previous digit until flap lands
       bottomSpan.textContent = prevChar;
-      // Animated upper flap shows previous digit folding down
       flapSpan.textContent = prevChar;
 
       card.classList.remove('flipping');
-      void card.offsetWidth; // trigger reflow for crisp replay
+      void card.offsetWidth;
       card.classList.add('flipping');
 
       setTimeout(() => {
@@ -532,6 +529,197 @@ let BLOG_POSTS = [];
 let blogQuery = '';
 let blogExpanded = false;
 
+/* Converts Markdown (tables, blockquotes, inline images, headings, lists) or HTML safely */
+function renderRichArticleContent(rawText, targetEl) {
+  const raw = String(rawText || '').trim();
+  targetEl.textContent = '';
+  if (!raw) return;
+
+  // If Pages CMS saved HTML directly, inject and wrap tables for responsive scrolling
+  if (/<(p|h[1-6]|table|blockquote|ul|ol|img|div|figure|hr)\b/i.test(raw)) {
+    targetEl.innerHTML = raw;
+    $$('table', targetEl).forEach(tbl => {
+      if (!tbl.parentElement.classList.contains('blog-table-wrap')) {
+        const wrap = el('div', 'blog-table-wrap');
+        tbl.parentNode.insertBefore(wrap, tbl);
+        wrap.append(tbl);
+      }
+    });
+    return;
+  }
+
+  const escapeHtml = str =>
+    str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+
+  const formatInline = str => {
+    let s = escapeHtml(str);
+    // Inline images: ![alt](url)
+    s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)/g, (_, alt, src, title) => {
+      const tAttr = title ? ` title="${title}"` : '';
+      return `<img src="${src}" alt="${alt}"${tAttr} loading="lazy">`;
+    });
+    // Links: [text](url)
+    s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    // Bold, Italic, Strikethrough, Inline Code
+    s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    s = s.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    s = s.replace(/~~([^~]+)~~/g, '<del>$1</del>');
+    s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+    return s;
+  };
+
+  const lines = raw.split(/\r?\n/);
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    if (!line.trim()) {
+      i++;
+      continue;
+    }
+
+    // Horizontal rule
+    if (/^([-*_]){3,}\s*$/.test(line.trim())) {
+      targetEl.append(document.createElement('hr'));
+      i++;
+      continue;
+    }
+
+    // Headings (#, ##, ###)
+    const hMatch = line.match(/^(#{1,4})\s+(.*)$/);
+    if (hMatch) {
+      const level = Math.min(hMatch[1].length + 1, 5);
+      const h = document.createElement(`h${level}`);
+      h.innerHTML = formatInline(hMatch[2]);
+      targetEl.append(h);
+      i++;
+      continue;
+    }
+
+    // Blockquote (> ...)
+    if (/^>\s?/.test(line)) {
+      const quoteLines = [];
+      while (i < lines.length && /^>\s?/.test(lines[i])) {
+        quoteLines.push(lines[i].replace(/^>\s?/, ''));
+        i++;
+      }
+      const bq = document.createElement('blockquote');
+      bq.innerHTML = quoteLines.map(formatInline).join('<br>');
+      targetEl.append(bq);
+      continue;
+    }
+
+    // Markdown Table (| col | col |)
+    if (
+      line.includes('|') &&
+      i + 1 < lines.length &&
+      /^\s*\|?[\s:-]+\|[\s|:-]*$/.test(lines[i + 1])
+    ) {
+      const parseCells = rowStr =>
+        rowStr
+          .trim()
+          .replace(/^\|/, '')
+          .replace(/\|$/, '')
+          .split('|')
+          .map(c => c.trim());
+
+      const headers = parseCells(lines[i]);
+      i += 2; // skip header & separator
+
+      const wrap = el('div', 'blog-table-wrap');
+      const table = document.createElement('table');
+      const thead = document.createElement('thead');
+      const trHead = document.createElement('tr');
+      headers.forEach(h => {
+        const th = document.createElement('th');
+        th.innerHTML = formatInline(h);
+        trHead.append(th);
+      });
+      thead.append(trHead);
+      table.append(thead);
+
+      const tbody = document.createElement('tbody');
+      while (i < lines.length && lines[i].includes('|') && lines[i].trim()) {
+        const cells = parseCells(lines[i]);
+        const tr = document.createElement('tr');
+        headers.forEach((_, idx) => {
+          const td = document.createElement('td');
+          td.innerHTML = formatInline(cells[idx] || '');
+          tr.append(td);
+        });
+        tbody.append(tr);
+        i++;
+      }
+      table.append(tbody);
+      wrap.append(table);
+      targetEl.append(wrap);
+      continue;
+    }
+
+    // Bulleted List (- or *)
+    if (/^\s*[-*+]\s+/.test(line)) {
+      const ul = document.createElement('ul');
+      while (i < lines.length && /^\s*[-*+]\s+/.test(lines[i])) {
+        const li = document.createElement('li');
+        li.innerHTML = formatInline(lines[i].replace(/^\s*[-*+]\s+/, ''));
+        ul.append(li);
+        i++;
+      }
+      targetEl.append(ul);
+      continue;
+    }
+
+    // Numbered List (1. ...)
+    if (/^\s*\d+\.\s+/.test(line)) {
+      const ol = document.createElement('ol');
+      while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i])) {
+        const li = document.createElement('li');
+        li.innerHTML = formatInline(lines[i].replace(/^\s*\d+\.\s+/, ''));
+        ol.append(li);
+        i++;
+      }
+      targetEl.append(ol);
+      continue;
+    }
+
+    // Standalone image block
+    const imgOnly = line.trim().match(/^!\[([^\]]*)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)$/);
+    if (imgOnly) {
+      const figure = el('figure', 'blog-figure');
+      const img = document.createElement('img');
+      img.src = imgOnly[2];
+      img.alt = imgOnly[1] || '';
+      img.loading = 'lazy';
+      figure.append(img);
+      if (imgOnly[3] || imgOnly[1]) {
+        figure.append(el('figcaption', null, imgOnly[3] || imgOnly[1]));
+      }
+      targetEl.append(figure);
+      i++;
+      continue;
+    }
+
+    // Standard Paragraph
+    const pLines = [];
+    while (
+      i < lines.length &&
+      lines[i].trim() &&
+      !/^(#{1,4}\s|>\s?|\s*[-*+]\s+|\s*\d+\.\s+|([-*_]){3,}\s*$)/.test(lines[i])
+    ) {
+      pLines.push(lines[i]);
+      i++;
+    }
+    const p = document.createElement('p');
+    p.innerHTML = pLines.map(formatInline).join('<br>');
+    targetEl.append(p);
+  }
+}
+
 function openBlogReader(post) {
   let modal = $('#blogModal');
   if (!modal) {
@@ -588,16 +776,7 @@ function openBlogReader(post) {
     coverEl.style.display = 'none';
   }
 
-  const bodyEl = $('#blogModalBody');
-  const raw = String(post.body || '');
-  if (/<[a-z][\s\S]*>/i.test(raw)) {
-    bodyEl.innerHTML = raw;
-  } else {
-    bodyEl.textContent = '';
-    raw.split(/\n{2,}/).forEach(para => {
-      if (para.trim()) bodyEl.append(el('p', null, para.trim()));
-    });
-  }
+  renderRichArticleContent(post.body, $('#blogModalBody'));
 
   modal.classList.add('open');
   document.body.style.overflow = 'hidden';
