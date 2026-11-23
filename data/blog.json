@@ -1,13 +1,14 @@
 {
   "posts": [
     {
-      "title": "TEST BLOG 123",
+      "slug": "welcome-to-amkro",
+      "title": "WELCOME TO THE AMKRO NEWSROOM",
       "date": "2026-11-23",
-      "author": "bagger",
-      "category": "NEWSPAPER",
-      "image": "assets/blog/805550_20261122231513_1.png",
-      "excerpt": "BUH GUH ZUH AND RUH GANG WAR IMMEDIATE",
-      "body": "# **Welcome** \nto the official AMKRO blog. Stay tuned for post-race breakdowns, endurance recaps, and league announcements across World Sim Series. very buh"
+      "author": "AMKRO Media",
+      "category": "ANNOUNCEMENT",
+      "image": "",
+      "excerpt": "Race reports, championship recaps, driver interviews, and team updates from AMK Racing Organization.",
+      "body": "<p>Welcome to the official <strong>AMKRO</strong> blog. Writers can format race reports freely with:</p>\n<ul>\n<li>Bullet points and numbered race results</li>\n<li>Embedded telemetry tables and standings breakdowns</li>\n<li>Inline photos placed anywhere between paragraphs</li>\n</ul>\n<table>\n<thead>\n<tr>\n<th>POS</th>\n<th>DRIVER</th>\n<th>GAP</th>\n</tr>\n</thead>\n<tbody><tr>\n<td>P1</td>\n<td>Driver One</td>\n<td>Leader</td>\n</tr>\n<tr>\n<td>P2</td>\n<td>Driver Two</td>\n<td>+1.420s</td>\n</tr>\n</tbody></table>\n"
     }
   ]
 }
