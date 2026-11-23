@@ -1,0 +1,71 @@
+name: Build Blog Index
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'posts/**'
+      - 'assets/blog/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-blog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Markdown & Front-Matter Parsers
+        run: npm install --no-save gray-matter marked
+
+      - name: Compile posts/*.md into data/blog.json
+        run: |
+          node -e '
+            const fs = require("fs");
+            const path = require("path");
+            const matter = require("gray-matter");
+            const { marked } = require("marked");
+
+            marked.setOptions({ gfm: true, breaks: true });
+
+            const dir = "posts";
+            const posts = [];
+
+            if (fs.existsSync(dir)) {
+              for (const file of fs.readdirSync(dir)) {
+                if (!file.endsWith(".md")) continue;
+                const raw = fs.readFileSync(path.join(dir, file), "utf8");
+                const parsed = matter(raw);
+                const img = (parsed.data.image || "").replace(/^\/+/, "");
+                const html = marked.parse(parsed.content || "").replace(/src="\/assets\/blog\//g, "src=\"assets/blog/");
+                posts.push({
+                  slug: file.replace(/\.md$/, ""),
+                  title: parsed.data.title || "Untitled",
+                  date: parsed.data.date ? new Date(parsed.data.date).toISOString().slice(0, 10) : "",
+                  author: parsed.data.author || "AMKRO Media",
+                  category: parsed.data.category || "NEWS",
+                  image: img,
+                  excerpt: parsed.data.excerpt || "",
+                  body: html
+                });
+              }
+            }
+
+            posts.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+            fs.mkdirSync("data", { recursive: true });
+            fs.writeFileSync("data/blog.json", JSON.stringify({ posts }, null, 2));
+          '
+
+      - name: Commit updated data/blog.json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/blog.json
+          git diff --staged --quiet || git commit -m "Update blog index"
+          git push
