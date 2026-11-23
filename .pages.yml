@@ -1,12 +1,13 @@
 media:
   input: assets/blog
   output: /assets/blog
+  categories: [image]
 
 content:
   - name: posts
     label: Blog & Race Reports
-    type: collection
     path: posts
+    type: collection
     view:
       fields: [title, category, date, author]
       primary: title
@@ -16,9 +17,20 @@ content:
         order: desc
     fields:
       - name: title
-        label: Headline
+        label: Title
         type: string
         required: true
+      - name: category
+        label: Category
+        type: select
+        options:
+          values:
+            - RACE REPORT
+            - CHAMPIONSHIP NEWS
+            - ANNOUNCEMENT
+            - DRIVER INTERVIEW
+            - NEWSPAPER
+        default: RACE REPORT
       - name: date
         label: Publish Date
         type: date
@@ -27,18 +39,33 @@ content:
         label: Author
         type: string
         default: AMKRO Media
-      - name: category
-        label: Tag / Category
-        type: string
-        default: RACE REPORT
       - name: image
-        label: Cover Image
+        label: Cover Banner Image
         type: image
       - name: excerpt
-        label: Short Summary
+        label: Short Summary (Shown on Blog Card)
         type: text
         required: true
       - name: body
-        label: Article Content (Headings, Lists, Tables & Inline Images)
+        label: Article Content (Insert Tables, Images & Quotes Anywhere)
         type: rich-text
         required: true
+        options:
+          format: html
+          toolbar:
+            - heading
+            - bold
+            - italic
+            - underline
+            - strike
+            - blockquote
+            - bulleted-list
+            - numbered-list
+            - table
+            - image
+            - link
+            - horizontal-rule
+            - align
+            - code-block
+            - undo
+            - redo
