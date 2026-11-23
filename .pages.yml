@@ -1,43 +1,44 @@
 media:
   input: assets/blog
-  output: assets/blog
+  output: /assets/blog
 
 content:
-  - name: blog
+  - name: posts
     label: Blog & Race Reports
-    type: file
-    path: data/blog.json
-    format: json
+    type: collection
+    path: posts
+    view:
+      fields: [title, category, date, author]
+      primary: title
+      sort: [date, title]
+      default:
+        sort: date
+        order: desc
     fields:
-      - name: posts
-        label: Posts
-        type: object
-        list: true
-        fields:
-          - name: title
-            label: Headline
-            type: string
-            required: true
-          - name: date
-            label: Publish Date
-            type: date
-            required: true
-          - name: author
-            label: Author
-            type: string
-            default: AMKRO Media
-          - name: category
-            label: Tag / Category
-            type: string
-            default: RACE REPORT
-          - name: image
-            label: Cover Image
-            type: image
-          - name: excerpt
-            label: Short Summary
-            type: text
-            required: true
-          - name: body
-            label: Full Article
-            type: rich-text
-            required: true
+      - name: title
+        label: Headline
+        type: string
+        required: true
+      - name: date
+        label: Publish Date
+        type: date
+        required: true
+      - name: author
+        label: Author
+        type: string
+        default: AMKRO Media
+      - name: category
+        label: Tag / Category
+        type: string
+        default: RACE REPORT
+      - name: image
+        label: Cover Image
+        type: image
+      - name: excerpt
+        label: Short Summary
+        type: text
+        required: true
+      - name: body
+        label: Article Content (Headings, Lists, Tables & Inline Images)
+        type: rich-text
+        required: true
