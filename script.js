@@ -81,6 +81,13 @@ function formatCountdown(ms) {
   return `Starts in ${pad(d)} days : ${pad(h)} hrs : ${pad(m)} min : ${pad(s)} sec`;
 }
 
+function parseEventDate(ev) {
+  const raw = ev.date || ev.start || ev.startTime || ev.start_date || ev.datetime || ev.timestamp;
+  if (!raw) return NaN;
+  if (typeof raw === 'number') return raw < 1e12 ? raw * 1000 : raw;
+  return new Date(raw).getTime();
+}
+
 async function loadEvents() {
   const listEl = $('#eventList');
   if (!listEl) return;
@@ -91,7 +98,7 @@ async function loadEvents() {
     const data = await res.json();
     events = Array.isArray(data)
       ? data
-      : (data.events || Object.values(data).find(v => Array.isArray(v)) || []);
+      : (data.events || data.races || Object.values(data).find(v => Array.isArray(v)) || []);
   } catch (e) {
     events = [];
   }
@@ -99,10 +106,10 @@ async function loadEvents() {
   const now = Date.now();
   const upcoming = events
     .filter(ev => {
-      const t = new Date(ev.date || ev.start || ev.startTime || 0).getTime();
-      return !Number.isNaN(t) && t >= now - 3600 * 1000;
+      const t = parseEventDate(ev);
+      return Number.isNaN(t) || t >= now - 3600 * 1000;
     })
-    .sort((a, b) => new Date(a.date || a.start || a.startTime) - new Date(b.date || b.start || b.startTime));
+    .sort((a, b) => (parseEventDate(a) || 0) - (parseEventDate(b) || 0));
 
   listEl.textContent = '';
   if (!upcoming.length) {
@@ -115,9 +122,9 @@ async function loadEvents() {
   upcoming.forEach((ev, idx) => {
     const card = el('article', 'card');
     card.append(el('span', 'badge', idx === 0 ? 'Next race' : 'Upcoming'));
-    card.append(el('h3', null, ev.title || ev.name || 'AMKRO Event'));
+    card.append(el('h3', null, ev.title || ev.name || ev.series || 'AMKRO Event'));
 
-    const startMs = new Date(ev.date || ev.start || ev.startTime).getTime();
+    const startMs = parseEventDate(ev);
     if (!Number.isNaN(startMs)) {
       const dateText = new Date(startMs).toLocaleString(undefined, {
         weekday: 'long',
@@ -132,6 +139,8 @@ async function loadEvents() {
       const cd = el('div', 'countdown', formatCountdown(startMs - Date.now()));
       card.append(cd);
       countdownNodes.push({ el: cd, target: startMs });
+    } else if (ev.dateText || ev.when) {
+      card.append(el('p', 'muted', ev.dateText || ev.when));
     }
 
     const actions = el('div', 'cta');
@@ -526,8 +535,12 @@ async function loadBlog() {
 async function loadSocials() {
   const ytGrid = $('#ytGrid');
   if (ytGrid) {
-    // Channel ID for @AMKRacingOrganisation (override via data-channel-id on #ytGrid if needed)
-    const channelId = ytGrid.dataset.channelId || 'UCrQ0k0W9k0X9f7C8e5Q2h8w';
+    // Supports UC... channel ID or UU... uploads playlist ID
+    const idVal = (ytGrid.dataset.channelId || ytGrid.dataset.playlistId || 'UU4X5-J0k8P3Q2w9L7mN6vBc').trim();
+    const feedParam = idVal.startsWith('UU') || idVal.startsWith('PL')
+      ? `playlist_id=${idVal}`
+      : `channel_id=${idVal}`;
+    const rawRss = `https://www.youtube.com/feeds/videos.xml?${feedParam}`;
     let videos = [];
 
     try {
@@ -542,16 +555,38 @@ async function loadSocials() {
 
     if (!videos.length) {
       try {
-        const rssUrl = encodeURIComponent(`https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`);
-        const apiRes = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${rssUrl}`);
+        const apiRes = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rawRss)}`);
         const apiData = await apiRes.json();
-        if (apiData && Array.isArray(apiData.items)) {
+        if (apiData && Array.isArray(apiData.items) && apiData.items.length) {
           videos = apiData.items.map(item => ({
             title: item.title,
             url: item.link,
             thumbnail: item.thumbnail,
             published: item.pubDate
           }));
+        }
+      } catch (e) {
+        videos = [];
+      }
+    }
+
+    if (!videos.length) {
+      try {
+        const proxyRes = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(rawRss)}`);
+        const proxyData = await proxyRes.json();
+        if (proxyData && proxyData.contents) {
+          const xml = new DOMParser().parseFromString(proxyData.contents, 'text/xml');
+          const entries = Array.from(xml.querySelectorAll('entry'));
+          videos = entries.map(entry => {
+            const vidId = entry.querySelector('videoId')?.textContent || '';
+            return {
+              id: vidId,
+              title: entry.querySelector('title')?.textContent || 'AMKRO Broadcast',
+              url: entry.querySelector('link')?.getAttribute('href') || `https://www.youtube.com/watch?v=${vidId}`,
+              thumbnail: vidId ? `https://i.ytimg.com/vi/${vidId}/hqdefault.jpg` : '',
+              published: entry.querySelector('published')?.textContent || ''
+            };
+          });
         }
       } catch (e) {
         videos = [];
@@ -571,7 +606,7 @@ async function loadSocials() {
       fallback.append(info);
       ytGrid.append(fallback);
     } else {
-      videos.slice(0, 3).forEach(v => {
+      videos.slice(0, 6).forEach(v => {
         const card = el('a', 'yt-card');
         card.href = v.url || (v.id ? `https://www.youtube.com/watch?v=${v.id}` : 'https://www.youtube.com/@AMKRacingOrganisation');
         card.target = '_blank';
