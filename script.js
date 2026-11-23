@@ -42,6 +42,17 @@ function createRectFlag(flagOrCode) {
   const raw = String(flagOrCode || '').trim();
   if (!raw) return null;
 
+  // Extract ISO code from flagcdn URL if already a URL
+  const urlMatch = raw.match(/\/([a-z]{2})\.(?:png|svg|webp)/i);
+  if (urlMatch) {
+    const img = document.createElement('img');
+    img.className = 'rect-flag';
+    img.src = `https://flagcdn.com/w40/${urlMatch[1].toLowerCase()}.png`;
+    img.alt = urlMatch[1].toUpperCase();
+    img.loading = 'lazy';
+    return img;
+  }
+
   // Convert Regional Indicator Flag Emoji (e.g. 🇱🇻, 🇫🇷) to ISO 2-letter code
   const chars = Array.from(raw);
   let iso = '';
@@ -89,7 +100,9 @@ async function loadEvents() {
   try {
     const res = await fetch('data/events.json', { cache: 'no-store' });
     const data = await res.json();
-    events = Array.isArray(data) ? data : (data.events || []);
+    events = Array.isArray(data)
+      ? data
+      : (Object.values(data).find(v => Array.isArray(v)) || []);
   } catch (e) {
     events = [];
   }
@@ -97,10 +110,10 @@ async function loadEvents() {
   const now = Date.now();
   const upcoming = events
     .filter(ev => {
-      const t = new Date(ev.date || ev.start || 0).getTime();
+      const t = new Date(ev.date || ev.start || ev.startTime || 0).getTime();
       return !Number.isNaN(t) && t >= now - 3600 * 1000;
     })
-    .sort((a, b) => new Date(a.date || a.start) - new Date(b.date || b.start));
+    .sort((a, b) => new Date(a.date || a.start || a.startTime) - new Date(b.date || b.start || b.startTime));
 
   listEl.textContent = '';
   if (!upcoming.length) {
@@ -115,7 +128,7 @@ async function loadEvents() {
     card.append(el('span', 'badge', idx === 0 ? 'Next race' : 'Upcoming'));
     card.append(el('h3', null, ev.title || ev.name || 'AMKRO Event'));
 
-    const startMs = new Date(ev.date || ev.start).getTime();
+    const startMs = new Date(ev.date || ev.start || ev.startTime).getTime();
     if (!Number.isNaN(startMs)) {
       const dateText = new Date(startMs).toLocaleString(undefined, {
         weekday: 'long',
@@ -134,7 +147,7 @@ async function loadEvents() {
 
     const actions = el('div', 'cta');
     const link = el('a', 'btn', 'GO TO THE RACE →');
-    link.href = ev.url || 'https://paddock.worldsimseries.com/';
+    link.href = ev.url || ev.link || 'https://paddock.worldsimseries.com/';
     link.target = '_blank';
     link.rel = 'noopener';
     actions.append(link);
@@ -161,8 +174,10 @@ let showAllOngoing = false;
 let showAllFinished = false;
 
 function isOngoingSeries(item) {
-  const status = String(item.status || item.badge || '').toUpperCase();
-  if (status.includes('FINISH') || status.includes('COMPLETED') || status.includes('ENDED')) {
+  if (typeof item.finished === 'boolean') return !item.finished;
+  if (typeof item.ongoing === 'boolean') return item.ongoing;
+  const status = String(item.status || item.badge || item.state || item.category || '').toUpperCase();
+  if (status.includes('FINISH') || status.includes('COMPLETED') || status.includes('ENDED') || status.includes('PAST')) {
     return false;
   }
   return true;
@@ -172,34 +187,41 @@ function buildStandingCard(s) {
   const card = el('article', 'st-card');
 
   const banner = el('div', 'st-banner');
-  if (s.banner || s.image) {
-    banner.style.backgroundImage = `url("${s.banner || s.image}")`;
+  const imgUrl = s.banner || s.image || s.cover || s.img;
+  if (imgUrl) {
+    banner.style.backgroundImage = `url("${imgUrl}")`;
   }
   card.append(banner);
 
   const body = el('div', 'st-body');
-  const badgeText = s.status || (isOngoingSeries(s) ? 'IN PROGRESS' : 'FINISHED');
+  const badgeText = s.status || s.badge || (isOngoingSeries(s) ? 'IN PROGRESS' : 'FINISHED');
   body.append(el('span', 'st-series', badgeText));
-  body.append(el('h3', null, s.series || s.title || 'AMKRO Series'));
+  body.append(el('h3', null, s.series || s.title || s.name || 'AMKRO Series'));
 
-  if (s.meta || s.updated) {
-    body.append(el('div', 'st-meta', s.meta || s.updated));
+  if (s.meta || s.date || s.subtitle) {
+    body.append(el('div', 'st-meta', s.meta || s.date || s.subtitle));
   }
 
-  const podium = Array.isArray(s.podium) ? s.podium : (Array.isArray(s.top3) ? s.top3 : []);
+  const podium = Array.isArray(s.podium)
+    ? s.podium
+    : (Array.isArray(s.top3) ? s.top3 : (Array.isArray(s.drivers) ? s.drivers : []));
+
   if (podium.length) {
     const ul = el('ul', 'st-podium');
     podium.slice(0, 3).forEach((row, idx) => {
       const li = el('li');
-      li.append(el('span', 'st-pos', row.pos || `P${idx + 1}`));
+      li.append(el('span', 'st-pos', row.pos || row.position || `P${idx + 1}`));
 
       const driverWrap = el('span', 'st-driver');
-      const flagNode = createRectFlag(row.flag || row.country);
+      const flagNode = createRectFlag(row.flag || row.country || row.nation);
       if (flagNode) driverWrap.append(flagNode);
       driverWrap.append(el('span', null, row.driver || row.name || 'TBD'));
       li.append(driverWrap);
 
-      const ptsVal = row.points !== undefined ? `${row.points} pts` : (row.pts || '');
+      const rawPts = row.points !== undefined ? row.points : row.pts;
+      const ptsVal = rawPts !== undefined && rawPts !== ''
+        ? (String(rawPts).includes('pt') ? String(rawPts) : `${rawPts} pts`)
+        : '';
       li.append(el('span', 'st-pts', ptsVal));
       ul.append(li);
     });
@@ -210,7 +232,7 @@ function buildStandingCard(s) {
 
   const actions = el('div', 'cta');
   const btn = el('a', 'btn', 'FULL STANDINGS →');
-  btn.href = s.url || 'https://paddock.worldsimseries.com/';
+  btn.href = s.url || s.link || 'https://paddock.worldsimseries.com/';
   btn.target = '_blank';
   btn.rel = 'noopener';
   actions.append(btn);
@@ -230,10 +252,11 @@ function renderStandings() {
     if (stFilter === 'FINISHED' && isOngoingSeries(item)) return false;
     if (!stQuery) return true;
 
-    const podiumText = (item.podium || item.top3 || [])
+    const podiumList = item.podium || item.top3 || item.drivers || [];
+    const podiumText = podiumList
       .map(p => `${p.driver || ''} ${p.name || ''}`)
       .join(' ');
-    const hay = `${item.series || ''} ${item.title || ''} ${item.status || ''} ${podiumText}`.toLowerCase();
+    const hay = `${item.series || ''} ${item.title || ''} ${item.name || ''} ${item.status || ''} ${podiumText}`.toLowerCase();
     return hay.includes(stQuery);
   });
 
@@ -293,18 +316,31 @@ async function loadStandings() {
   try {
     const res = await fetch('data/standings.json', { cache: 'no-store' });
     const data = await res.json();
-    ALL_STANDINGS = Array.isArray(data) ? data : (data.standings || data.series || []);
 
-    if ($('#stUpdated') && data.updated) {
-      const d = new Date(data.updated);
-      if (!Number.isNaN(d.getTime())) {
-        $('#stUpdated').textContent = `Updated ${d.toLocaleString(undefined, {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric',
-          hour: 'numeric',
-          minute: '2-digit'
-        })}.`;
+    if (Array.isArray(data)) {
+      ALL_STANDINGS = data;
+    } else if (data && typeof data === 'object') {
+      // Combine separate ongoing/finished arrays if present, otherwise pick first array property
+      if (Array.isArray(data.ongoing) || Array.isArray(data.finished)) {
+        const ong = (data.ongoing || []).map(x => ({ ...x, ongoing: true }));
+        const fin = (data.finished || []).map(x => ({ ...x, ongoing: false }));
+        ALL_STANDINGS = [...ong, ...fin];
+      } else {
+        ALL_STANDINGS = Object.values(data).find(v => Array.isArray(v)) || [];
+      }
+
+      const upd = data.updated || data.updated_at || data.lastUpdated || data.timestamp;
+      if ($('#stUpdated') && upd) {
+        const d = new Date(upd);
+        if (!Number.isNaN(d.getTime())) {
+          $('#stUpdated').textContent = `Updated ${d.toLocaleString(undefined, {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit'
+          })}.`;
+        }
       }
     }
   } catch (e) {
@@ -517,43 +553,77 @@ async function loadBlog() {
   renderBlog();
 }
 
-/* ====== Socials Page: YouTube & Instagram ====== */
+/* ====== Socials Page: Live YouTube RSS Feed & Instagram ====== */
 async function loadSocials() {
   const ytGrid = $('#ytGrid');
   if (ytGrid) {
+    const YT_CHANNEL_ID = 'UC8R_9u6xL3mP4kQ2vW7nJ0A';
+    const rssUrl = encodeURIComponent(`https://www.youtube.com/feeds/videos.xml?user=AMKRacingOrganisation`);
+    let videos = [];
+
     try {
-      const data = await (await fetch('data/youtube.json', { cache: 'no-store' })).json();
-      const videos = Array.isArray(data) ? data : (data.videos || data.items || []);
-      ytGrid.textContent = '';
-      if (!videos.length) {
-        ytGrid.append(el('p', 'muted', 'Visit our YouTube channel for live race broadcasts and highlights.'));
-      } else {
-        videos.slice(0, 6).forEach(v => {
-          const card = el('a', 'yt-card');
-          card.href = v.url || (v.id ? `https://www.youtube.com/watch?v=${v.id}` : 'https://www.youtube.com/@AMKRacingOrganisation');
-          card.target = '_blank';
-          card.rel = 'noopener';
-
-          if (v.thumbnail || v.id) {
-            const img = el('img', 'yt-thumb');
-            img.src = v.thumbnail || `https://i.ytimg.com/vi/${v.id}/hqdefault.jpg`;
-            img.alt = v.title || 'YouTube Video';
-            img.loading = 'lazy';
-            card.append(img);
-          }
-
-          const info = el('div', 'yt-info');
-          info.append(el('h3', null, v.title || 'AMKRO Broadcast'));
-          if (v.published || v.date) {
-            info.append(el('small', 'muted', new Date(v.published || v.date).toLocaleDateString(undefined, { dateStyle: 'medium' })));
-          }
-          card.append(info);
-          ytGrid.append(card);
-        });
+      // Try local data/youtube.json first if present, else live RSS via rss2json
+      const localRes = await fetch('data/youtube.json', { cache: 'no-store' });
+      if (localRes.ok) {
+        const d = await localRes.json();
+        videos = Array.isArray(d) ? d : (d.videos || d.items || []);
       }
     } catch (e) {
-      ytGrid.textContent = '';
-      ytGrid.append(el('p', 'muted', 'Watch live race streams and replays on @AMKRacingOrganisation.'));
+      videos = [];
+    }
+
+    if (!videos.length) {
+      try {
+        const apiRes = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${rssUrl}`);
+        const apiData = await apiRes.json();
+        if (apiData && Array.isArray(apiData.items)) {
+          videos = apiData.items.map(item => ({
+            title: item.title,
+            url: item.link,
+            thumbnail: item.thumbnail,
+            published: item.pubDate
+          }));
+        }
+      } catch (e) {
+        videos = [];
+      }
+    }
+
+    ytGrid.textContent = '';
+    if (!videos.length) {
+      const fallback = el('a', 'yt-card');
+      fallback.href = 'https://www.youtube.com/@AMKRacingOrganisation';
+      fallback.target = '_blank';
+      fallback.rel = 'noopener';
+      const info = el('div', 'yt-info');
+      info.append(el('span', 'st-series', 'YOUTUBE'));
+      info.append(el('h3', null, '@AMKRACINGORGANISATION'));
+      info.append(el('p', 'muted', 'Watch live race broadcasts, championship highlights, and onboard replays on our official YouTube channel.'));
+      fallback.append(info);
+      ytGrid.append(fallback);
+    } else {
+      videos.slice(0, 6).forEach(v => {
+        const card = el('a', 'yt-card');
+        card.href = v.url || (v.id ? `https://www.youtube.com/watch?v=${v.id}` : 'https://www.youtube.com/@AMKRacingOrganisation');
+        card.target = '_blank';
+        card.rel = 'noopener';
+
+        if (v.thumbnail || v.id) {
+          const img = el('img', 'yt-thumb');
+          img.src = v.thumbnail || `https://i.ytimg.com/vi/${v.id}/hqdefault.jpg`;
+          img.alt = v.title || 'YouTube Video';
+          img.loading = 'lazy';
+          card.append(img);
+        }
+
+        const info = el('div', 'yt-info');
+        info.append(el('h3', null, v.title || 'AMKRO Broadcast'));
+        if (v.published || v.date) {
+          info.append(el('small', 'muted', new Date(v.published || v.date).toLocaleDateString(undefined, { dateStyle: 'medium' })));
+        }
+        card.append(info);
+        ytGrid.append(card);
+      });
     }
   }
 
