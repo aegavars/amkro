@@ -52,7 +52,6 @@ body::after {
   opacity: 0.78;
 }
 
-/* Left diagonal dashes — higher frequency + subtle depth shadow at center seam */
 body::before {
   left: 0;
   background:
@@ -70,7 +69,6 @@ body::before {
   box-shadow: inset -18px 0 32px rgba(0, 0, 0, 0.65);
 }
 
-/* Right diagonal dashes — higher frequency + subtle depth shadow at center seam */
 body::after {
   right: 0;
   background:
@@ -116,12 +114,18 @@ body::after {
   }
 }
 
-@keyframes pulseBorder {
-  0%, 100% {
-    border-color: rgba(255, 255, 255, 0.45);
+@keyframes flapFlip {
+  0% {
+    transform: rotateX(0deg);
+    background-color: #FFFFFF;
   }
   50% {
-    border-color: #FFFFFF;
+    transform: rotateX(-90deg);
+    background-color: #D8D8D8;
+  }
+  100% {
+    transform: rotateX(-180deg);
+    background-color: #FFFFFF;
   }
 }
 
@@ -426,7 +430,7 @@ h1, h2, h3 {
     0 0 0 1px #FFFFFF;
 }
 
-/* ====== Upcoming Race Cards (Home) ====== */
+/* ====== Upcoming Race Cards (Fixed Alignment + Vintage White Split-Flap Clock) ====== */
 .card {
   padding: 22px;
   display: flex;
@@ -461,20 +465,205 @@ h1, h2, h3 {
   flex: 1;
 }
 
-.card h3 {
-  font-size: 1.15rem;
-  margin-bottom: 8px;
+/* Fixed 2-line title slot so Date & Flip Countdown sit at the exact same level across all cards */
+.event-card .event-title {
+  font-size: 1.12rem;
+  line-height: 1.35;
+  min-height: 2.7em;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 10px;
 }
 
-.countdown {
-  margin-top: 12px;
-  padding: 10px 12px;
-  background: #0A0A0A;
-  border: 1px solid var(--border);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.85rem;
-  color: #FFFFFF;
-  animation: pulseBorder 2.4s infinite ease-in-out;
+.event-card .event-date {
+  margin: 0 0 14px;
+  min-height: 1.55em;
+  font-size: 0.9rem;
+}
+
+/* Vintage Split-Flap Clock Container (Uniform Width & Centered in Every Box) */
+.flip-clock {
+  width: 100%;
+  margin: 0 auto;
+  padding: 12px 8px 10px;
+  background: #0D0D0D;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flip-row {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.flip-unit {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+
+.flip-pair {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 3px;
+}
+
+.flip-digit {
+  position: relative;
+  flex: 1 1 0;
+  max-width: 31px;
+  height: 44px;
+  background: #FFFFFF;
+  color: #000000;
+  border: 1px solid #000000;
+  box-shadow:
+    0 3px 6px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  font-family: 'Inter', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  font-size: 1.45rem;
+  line-height: 44px;
+  text-align: center;
+  perspective: 260px;
+  overflow: hidden;
+  user-select: none;
+}
+
+.flip-half {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 50%;
+  overflow: hidden;
+  background: #FFFFFF;
+  color: #000000;
+}
+
+.flip-half span {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 44px;
+  line-height: 44px;
+  text-align: center;
+}
+
+.flip-top {
+  top: 0;
+  background: linear-gradient(180deg, #F5F5F5 0%, #FFFFFF 100%);
+}
+
+.flip-top span {
+  top: 0;
+}
+
+.flip-bottom {
+  bottom: 0;
+  background: linear-gradient(180deg, #EFEFEF 0%, #FFFFFF 100%);
+}
+
+.flip-bottom span {
+  bottom: 0;
+}
+
+/* Animated top flap dropping downward */
+.flip-flap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  overflow: hidden;
+  background: #FFFFFF;
+  color: #000000;
+  transform-origin: center bottom;
+  backface-visibility: hidden;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.flip-flap span {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 44px;
+  line-height: 44px;
+  text-align: center;
+}
+
+.flip-digit.flipping .flip-flap {
+  animation: flapFlip 0.34s cubic-bezier(0.37, 0.01, 0.94, 0.35) forwards;
+}
+
+/* Center mechanical split seam & side pins */
+.flip-hinge {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1.5px;
+  margin-top: -0.75px;
+  background: rgba(0, 0, 0, 0.42);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+  z-index: 4;
+  pointer-events: none;
+}
+
+.flip-hinge::before,
+.flip-hinge::after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  width: 2px;
+  height: 5px;
+  background: #222222;
+}
+
+.flip-hinge::before {
+  left: 0;
+}
+
+.flip-hinge::after {
+  right: 0;
+}
+
+.flip-label {
+  margin-top: 6px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.flip-colon {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  height: 44px;
+  padding: 0 1px;
+  flex-shrink: 0;
+}
+
+.flip-colon span {
+  width: 4px;
+  height: 4px;
+  background: #FFFFFF;
+  display: block;
 }
 
 /* ====== Full-Width Search Bars (Standings & Blog) ====== */
