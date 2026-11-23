@@ -2,82 +2,54 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>AMKRO — AMK RACING ORGANIZATION</title>
-  <meta name="description" content="AMK Racing Organization — sim racing league nights, endurance races, setups and standings.">
-  <link rel="stylesheet" href="style.css?v=5">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AMKRO — AMK Racing Organization</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
 
   <header class="site-header">
-    <a class="brand" href="#top" aria-label="AMK Racing Organization">
-      <img src="logo.png" alt="AMK Racing Organization" class="nav-logo">
+    <a class="brand" href="index.html" aria-label="AMKRO Home">
+      <img class="nav-logo" src="logo.png" alt="AMKRO">
     </a>
-    <nav id="nav">
-      <a href="#race">Upcoming races</a>
-      <a href="#standings">Standings</a>
-      <a href="#instagram">Instagram</a>
-      <a href="#youtube">YouTube</a>
-      <a href="#lore">Lore</a>
-      <a href="#faq">FAQ</a>
+    <button class="menu-btn" id="menuBtn" type="button" aria-expanded="false" aria-controls="nav">MENU</button>
+    <nav id="nav" aria-label="Primary Navigation">
+      <a class="active" href="index.html">HOME</a>
+      <span class="nav-dash" aria-hidden="true">-</span>
+      <a href="standings.html">SERIES STANDINGS</a>
+      <span class="nav-dash" aria-hidden="true">-</span>
+      <a href="socials.html">SOCIALS</a>
+      <span class="nav-dash" aria-hidden="true">-</span>
+      <a href="about.html">ABOUT US</a>
     </nav>
-    <button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="nav">Menu</button>
   </header>
 
+  <section class="logo-hero">
+    <div class="logo-hero-inner">
+      <img src="logo.png" alt="AMK Racing Organization Logo">
+      <h1 class="hero-org-name">AMK RACING ORGANIZATION</h1>
+    </div>
+  </section>
+
   <main id="main">
-    <section class="logo-hero" id="top" aria-label="AMK Racing Organization">
-      <img src="logo.png" alt="AMK Racing Organization" style="max-width:440px;max-height:240px;width:85%;height:auto;display:block;margin:0 auto">
-    </section>
-
-    <section class="block" id="race">
-      <h2>Upcoming races</h2>
-      <div class="event-list" id="eventList">Loading upcoming races…</div>
-    </section>
-
-    <section class="block alt" id="standings">
-      <h2>Series standings</h2>
-      <p class="muted">All current and finished AMKRO events. <span id="stUpdated"></span></p>
-      <div class="tools-row">
-        <input type="search" id="stSearch" placeholder="Search the series name…" aria-label="Search series">
-        <div class="chips" id="stChips"></div>
-      </div>
-      <div class="st-list" id="stList"></div>
-    </section>
-
-    <section class="block" id="instagram">
-      <h2>Instagram</h2>
-      <div class="ig-grid" id="igGrid">Loading Instagram…</div>
-    </section>
-
-    <section class="block alt" id="youtube">
-      <h2>YouTube</h2>
-      <p class="muted">The three latest videos from AMK Racing Organisation, head organisation of the Tatuus World Series.</p>
-      <div class="yt-grid" id="ytGrid">Loading latest videos…</div>
+    <section id="races" class="block">
+      <h2>UPCOMING RACES</h2>
+      <div id="eventList" class="event-list">Loading schedule…</div>
       <div class="cta">
-        <a class="btn primary" id="ytSubBtn" href="https://www.youtube.com/@AMKRacingOrganisation?sub_confirmation=1" target="_blank" rel="noopener">Subscribe on YouTube →</a>
+        <a class="btn primary" href="https://paddock.worldsimseries.com/" target="_blank" rel="noopener">OPEN WORLD SIM SERIES →</a>
       </div>
-    </section>
-
-    <section class="block" id="lore">
-      <h2>Team History</h2>
-      <ul class="timeline" id="timeline"></ul>
-    </section>
-
-    <section class="block alt" id="faq">
-      <h2>FAQ</h2>
-      <div class="faq" id="faqList"></div>
     </section>
   </main>
 
   <footer class="site-footer">
-    <div class="brand">
-      <img src="logo.png" alt="AMK Racing Organization" class="nav-logo">
-    </div>
-    <p>© <span id="year"></span> AMK Racing Organization</p>
+    <a class="brand" href="index.html">
+      <img class="nav-logo" src="logo.png" alt="AMKRO">
+    </a>
+    <p>© <span id="year"></span> AMK Racing Organization. All rights reserved.</p>
   </footer>
 
-  <button id="toTop" aria-label="Back to top">↑</button>
-  <script src="script.js?v=5"></script>
+  <button id="toTop" type="button" aria-label="Back to top">↑</button>
+  <script src="script.js"></script>
 </body>
 </html>
