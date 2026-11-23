@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>About Us — AMKRO</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <a class="brand" href="index.html" aria-label="AMKRO Home">
+      <img class="nav-logo" src="logo.png" alt="AMKRO">
+    </a>
+    <button class="menu-btn" id="menuBtn" type="button" aria-expanded="false" aria-controls="nav">MENU</button>
+    <nav id="nav" aria-label="Primary Navigation">
+      <a href="index.html">HOME</a>
+      <span class="nav-dash" aria-hidden="true">-</span>
+      <a href="standings.html">SERIES STANDINGS</a>
+      <span class="nav-dash" aria-hidden="true">-</span>
+      <a href="socials.html">SOCIALS</a>
+      <span class="nav-dash" aria-hidden="true">-</span>
+      <a class="active" href="about.html">ABOUT US</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section id="history" class="block">
+      <h2>TEAM HISTORY</h2>
+      <ul id="timeline" class="timeline"></ul>
+    </section>
+
+    <section id="faq" class="block alt">
+      <h2>FAQ</h2>
+      <div id="faqList" class="faq"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <a class="brand" href="index.html">
+      <img class="nav-logo" src="logo.png" alt="AMKRO">
+    </a>
+    <p>© <span id="year"></span> AMK Racing Organization. All rights reserved.</p>
+  </footer>
+
+  <button id="toTop" type="button" aria-label="Back to top">↑</button>
+  <script src="script.js"></script>
+</body>
+</html>
