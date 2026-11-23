@@ -1,11 +1,10 @@
 media:
-  input: assets/blog
-  output: /assets/blog
-  categories: [image]
+  input: images/blog
+  output: /images/blog
 
 content:
   - name: posts
-    label: Blog & Race Reports
+    label: Blog Posts
     path: posts
     type: collection
     view:
@@ -17,7 +16,7 @@ content:
         order: desc
     fields:
       - name: title
-        label: Title
+        label: Article Title
         type: string
         required: true
       - name: category
@@ -25,12 +24,12 @@ content:
         type: select
         options:
           values:
-            - RACE REPORT
-            - CHAMPIONSHIP NEWS
-            - ANNOUNCEMENT
-            - DRIVER INTERVIEW
-            - NEWSPAPER
-        default: RACE REPORT
+            - Race Report
+            - Championship News
+            - Team Announcement
+            - Technical / Rules
+            - Newspaper
+        default: Race Report
       - name: date
         label: Publish Date
         type: date
@@ -43,15 +42,12 @@ content:
         label: Cover Banner Image
         type: image
       - name: excerpt
-        label: Short Summary (Shown on Blog Card)
+        label: Short Summary (Shown on Card)
         type: text
-        required: true
       - name: body
-        label: Article Content (Insert Tables, Images & Quotes Anywhere)
+        label: Full Article Content
         type: rich-text
-        required: true
         options:
-          format: html
           toolbar:
             - heading
             - bold
@@ -64,8 +60,6 @@ content:
             - table
             - image
             - link
-            - horizontal-rule
-            - align
+            - code
             - code-block
-            - undo
-            - redo
+            - horizontal-rule
