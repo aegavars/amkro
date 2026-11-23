@@ -1,6 +1,14 @@
 {
   "events": [
     {
+      "name": "IN PROGRESS - DRIVE NOW!",
+      "start": "2026-11-23T18:01:00+01:00",
+      "durationHours": 2,
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202611231658326b0470b8b9629.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/306841",
+      "description": ""
+    },
+    {
       "name": "ALFA ROMEO CUP (3/8)",
       "start": "2026-11-27T22:00:00+01:00",
       "durationHours": 2,
