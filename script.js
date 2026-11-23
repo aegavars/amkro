@@ -38,34 +38,23 @@ if (toTop) {
 }
 
 /* ====== Flat Rectangular Country Flag Helper ====== */
-function createRectFlag(flagOrCode) {
-  const raw = String(flagOrCode || '').trim();
-  if (!raw) return null;
-
-  // Extract ISO code from flagcdn URL if already a URL
-  const urlMatch = raw.match(/\/([a-z]{2})\.(?:png|svg|webp)/i);
-  if (urlMatch) {
-    const img = document.createElement('img');
-    img.className = 'rect-flag';
-    img.src = `https://flagcdn.com/w40/${urlMatch[1].toLowerCase()}.png`;
-    img.alt = urlMatch[1].toUpperCase();
-    img.loading = 'lazy';
-    return img;
-  }
-
-  // Convert Regional Indicator Flag Emoji (e.g. 🇱🇻, 🇫🇷) to ISO 2-letter code
-  const chars = Array.from(raw);
+function createRectFlag(countryCode, fallbackEmoji) {
+  const raw = String(countryCode || '').trim();
   let iso = '';
-  if (
-    chars.length === 2 &&
-    chars.every(c => {
-      const cp = c.codePointAt(0);
-      return cp >= 0x1F1E6 && cp <= 0x1F1FF;
-    })
-  ) {
-    iso = chars.map(c => String.fromCharCode(c.codePointAt(0) - 0x1F1E6 + 97)).join('');
-  } else if (/^[a-zA-Z]{2}$/.test(raw)) {
+
+  if (/^[a-zA-Z]{2}$/.test(raw)) {
     iso = raw.toLowerCase();
+  } else if (fallbackEmoji) {
+    const chars = Array.from(String(fallbackEmoji).trim());
+    if (
+      chars.length === 2 &&
+      chars.every(c => {
+        const cp = c.codePointAt(0);
+        return cp >= 0x1F1E6 && cp <= 0x1F1FF;
+      })
+    ) {
+      iso = chars.map(c => String.fromCharCode(c.codePointAt(0) - 0x1F1E6 + 97)).join('');
+    }
   }
 
   if (iso) {
@@ -77,7 +66,7 @@ function createRectFlag(flagOrCode) {
     return img;
   }
 
-  return el('span', 'st-flag-text', raw);
+  return fallbackEmoji ? el('span', 'st-flag-text', fallbackEmoji) : null;
 }
 
 /* ====== Home Page: Upcoming Races & Live Countdowns ====== */
@@ -102,7 +91,7 @@ async function loadEvents() {
     const data = await res.json();
     events = Array.isArray(data)
       ? data
-      : (Object.values(data).find(v => Array.isArray(v)) || []);
+      : (data.events || Object.values(data).find(v => Array.isArray(v)) || []);
   } catch (e) {
     events = [];
   }
@@ -174,48 +163,41 @@ let showAllOngoing = false;
 let showAllFinished = false;
 
 function isOngoingSeries(item) {
-  if (typeof item.finished === 'boolean') return !item.finished;
-  if (typeof item.ongoing === 'boolean') return item.ongoing;
-  const status = String(item.status || item.badge || item.state || item.category || '').toUpperCase();
-  if (status.includes('FINISH') || status.includes('COMPLETED') || status.includes('ENDED') || status.includes('PAST')) {
-    return false;
-  }
-  return true;
+  const status = String(item.status || item.progress || '').toLowerCase();
+  return status !== 'finished' && !status.startsWith('finished');
 }
 
 function buildStandingCard(s) {
   const card = el('article', 'st-card');
 
   const banner = el('div', 'st-banner');
-  const imgUrl = s.banner || s.image || s.cover || s.img;
+  const imgUrl = s.thumbnail || s.banner || s.image;
   if (imgUrl) {
     banner.style.backgroundImage = `url("${imgUrl}")`;
   }
   card.append(banner);
 
   const body = el('div', 'st-body');
-  const badgeText = s.status || s.badge || (isOngoingSeries(s) ? 'IN PROGRESS' : 'FINISHED');
+  const badgeText = s.progress || (isOngoingSeries(s) ? 'IN PROGRESS' : 'FINISHED');
   body.append(el('span', 'st-series', badgeText));
-  body.append(el('h3', null, s.series || s.title || s.name || 'AMKRO Series'));
+  body.append(el('h3', null, s.series || s.name || 'AMKRO Series'));
 
-  if (s.meta || s.date || s.subtitle) {
-    body.append(el('div', 'st-meta', s.meta || s.date || s.subtitle));
+  if (s.date) {
+    body.append(el('div', 'st-meta', s.date));
   }
 
-  const podium = Array.isArray(s.podium)
-    ? s.podium
-    : (Array.isArray(s.top3) ? s.top3 : (Array.isArray(s.drivers) ? s.drivers : []));
-
+  const podium = Array.isArray(s.top3) ? s.top3 : (Array.isArray(s.podium) ? s.podium : []);
   if (podium.length) {
     const ul = el('ul', 'st-podium');
     podium.slice(0, 3).forEach((row, idx) => {
       const li = el('li');
-      li.append(el('span', 'st-pos', row.pos || row.position || `P${idx + 1}`));
+      const posLabel = row.position ? `P${row.position}` : (row.pos || `P${idx + 1}`);
+      li.append(el('span', 'st-pos', posLabel));
 
       const driverWrap = el('span', 'st-driver');
-      const flagNode = createRectFlag(row.flag || row.country || row.nation);
+      const flagNode = createRectFlag(row.countryCode, row.flag);
       if (flagNode) driverWrap.append(flagNode);
-      driverWrap.append(el('span', null, row.driver || row.name || 'TBD'));
+      driverWrap.append(el('span', null, row.name || row.fullName || row.driver || 'TBD'));
       li.append(driverWrap);
 
       const rawPts = row.points !== undefined ? row.points : row.pts;
@@ -232,7 +214,7 @@ function buildStandingCard(s) {
 
   const actions = el('div', 'cta');
   const btn = el('a', 'btn', 'FULL STANDINGS →');
-  btn.href = s.url || s.link || 'https://paddock.worldsimseries.com/';
+  btn.href = s.standingsUrl || s.url || 'https://paddock.worldsimseries.com/';
   btn.target = '_blank';
   btn.rel = 'noopener';
   actions.append(btn);
@@ -252,11 +234,11 @@ function renderStandings() {
     if (stFilter === 'FINISHED' && isOngoingSeries(item)) return false;
     if (!stQuery) return true;
 
-    const podiumList = item.podium || item.top3 || item.drivers || [];
+    const podiumList = item.top3 || item.podium || [];
     const podiumText = podiumList
-      .map(p => `${p.driver || ''} ${p.name || ''}`)
+      .map(p => `${p.name || ''} ${p.fullName || ''} ${p.driver || ''}`)
       .join(' ');
-    const hay = `${item.series || ''} ${item.title || ''} ${item.name || ''} ${item.status || ''} ${podiumText}`.toLowerCase();
+    const hay = `${item.series || ''} ${item.name || ''} ${item.progress || ''} ${podiumText}`.toLowerCase();
     return hay.includes(stQuery);
   });
 
@@ -316,31 +298,18 @@ async function loadStandings() {
   try {
     const res = await fetch('data/standings.json', { cache: 'no-store' });
     const data = await res.json();
+    ALL_STANDINGS = Array.isArray(data) ? data : (data.events || data.standings || data.series || []);
 
-    if (Array.isArray(data)) {
-      ALL_STANDINGS = data;
-    } else if (data && typeof data === 'object') {
-      // Combine separate ongoing/finished arrays if present, otherwise pick first array property
-      if (Array.isArray(data.ongoing) || Array.isArray(data.finished)) {
-        const ong = (data.ongoing || []).map(x => ({ ...x, ongoing: true }));
-        const fin = (data.finished || []).map(x => ({ ...x, ongoing: false }));
-        ALL_STANDINGS = [...ong, ...fin];
-      } else {
-        ALL_STANDINGS = Object.values(data).find(v => Array.isArray(v)) || [];
-      }
-
-      const upd = data.updated || data.updated_at || data.lastUpdated || data.timestamp;
-      if ($('#stUpdated') && upd) {
-        const d = new Date(upd);
-        if (!Number.isNaN(d.getTime())) {
-          $('#stUpdated').textContent = `Updated ${d.toLocaleString(undefined, {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit'
-          })}.`;
-        }
+    if ($('#stUpdated') && data.updated) {
+      const d = new Date(data.updated);
+      if (!Number.isNaN(d.getTime())) {
+        $('#stUpdated').textContent = `Updated ${d.toLocaleString(undefined, {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit'
+        })}.`;
       }
     }
   } catch (e) {
@@ -553,16 +522,15 @@ async function loadBlog() {
   renderBlog();
 }
 
-/* ====== Socials Page: Live YouTube RSS Feed & Instagram ====== */
+/* ====== Socials Page: Live YouTube Feed & Instagram ====== */
 async function loadSocials() {
   const ytGrid = $('#ytGrid');
   if (ytGrid) {
-    const YT_CHANNEL_ID = 'UC8R_9u6xL3mP4kQ2vW7nJ0A';
-    const rssUrl = encodeURIComponent(`https://www.youtube.com/feeds/videos.xml?user=AMKRacingOrganisation`);
+    // Channel ID for @AMKRacingOrganisation (override via data-channel-id on #ytGrid if needed)
+    const channelId = ytGrid.dataset.channelId || 'UCrQ0k0W9k0X9f7C8e5Q2h8w';
     let videos = [];
 
     try {
-      // Try local data/youtube.json first if present, else live RSS via rss2json
       const localRes = await fetch('data/youtube.json', { cache: 'no-store' });
       if (localRes.ok) {
         const d = await localRes.json();
@@ -574,6 +542,7 @@ async function loadSocials() {
 
     if (!videos.length) {
       try {
+        const rssUrl = encodeURIComponent(`https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`);
         const apiRes = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${rssUrl}`);
         const apiData = await apiRes.json();
         if (apiData && Array.isArray(apiData.items)) {
@@ -602,7 +571,7 @@ async function loadSocials() {
       fallback.append(info);
       ytGrid.append(fallback);
     } else {
-      videos.slice(0, 6).forEach(v => {
+      videos.slice(0, 3).forEach(v => {
         const card = el('a', 'yt-card');
         card.href = v.url || (v.id ? `https://www.youtube.com/watch?v=${v.id}` : 'https://www.youtube.com/@AMKRacingOrganisation');
         card.target = '_blank';
