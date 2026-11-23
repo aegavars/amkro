@@ -121,16 +121,119 @@ function findMatchingSeriesBanner(eventTitle, standingsList) {
   return match ? (match.thumbnail || match.banner || match.image || '') : '';
 }
 
-/* ====== Home Page: Upcoming Races & Live Countdowns ====== */
-function formatCountdown(ms) {
-  if (ms <= 0) return 'LIVE / STARTED';
+/* ====== Home Page: Upcoming Races & Vintage Split-Flap Flip Countdown ====== */
+function getCountdownParts(ms) {
+  if (ms <= 0) {
+    return { days: '00', hrs: '00', mins: '00', secs: '00', live: true };
+  }
   const totalSec = Math.floor(ms / 1000);
-  const d = Math.floor(totalSec / 86400);
+  const d = Math.min(99, Math.floor(totalSec / 86400));
   const h = Math.floor((totalSec % 86400) / 3600);
   const m = Math.floor((totalSec % 3600) / 60);
   const s = totalSec % 60;
   const pad = n => String(n).padStart(2, '0');
-  return `Starts in ${pad(d)} days : ${pad(h)} hrs : ${pad(m)} min : ${pad(s)} sec`;
+  return {
+    days: pad(d),
+    hrs: pad(h),
+    mins: pad(m),
+    secs: pad(s),
+    live: false
+  };
+}
+
+function createFlipDigit(initialChar) {
+  const card = el('div', 'flip-digit');
+  const top = el('div', 'flip-half flip-top');
+  const topSpan = el('span', null, initialChar);
+  top.append(topSpan);
+
+  const bottom = el('div', 'flip-half flip-bottom');
+  const bottomSpan = el('span', null, initialChar);
+  bottom.append(bottomSpan);
+
+  const flap = el('div', 'flip-flap');
+  const flapSpan = el('span', null, initialChar);
+  flap.append(flapSpan);
+
+  card.append(top, bottom, flap, el('span', 'flip-hinge'));
+
+  return {
+    el: card,
+    current: initialChar,
+    set(nextChar) {
+      if (nextChar === this.current) return;
+      const prevChar = this.current;
+      this.current = nextChar;
+
+      // Top static half reveals the new digit underneath as the flap drops
+      topSpan.textContent = nextChar;
+      // Bottom static half holds previous digit until flap lands
+      bottomSpan.textContent = prevChar;
+      // Animated upper flap shows previous digit folding down
+      flapSpan.textContent = prevChar;
+
+      card.classList.remove('flipping');
+      void card.offsetWidth; // trigger reflow for crisp replay
+      card.classList.add('flipping');
+
+      setTimeout(() => {
+        bottomSpan.textContent = nextChar;
+      }, 170);
+
+      setTimeout(() => {
+        card.classList.remove('flipping');
+        flapSpan.textContent = nextChar;
+      }, 340);
+    }
+  };
+}
+
+function createFlipClock(targetMs) {
+  const initial = getCountdownParts(targetMs - Date.now());
+  const wrap = el('div', 'flip-clock');
+  const row = el('div', 'flip-row');
+
+  const units = [
+    { key: 'days', label: 'DAYS' },
+    { key: 'hrs', label: 'HRS' },
+    { key: 'mins', label: 'MINS' },
+    { key: 'secs', label: 'SECS' }
+  ];
+
+  const digitControllers = {};
+
+  units.forEach((u, idx) => {
+    const unitBox = el('div', 'flip-unit');
+    const pair = el('div', 'flip-pair');
+    const d0 = createFlipDigit(initial[u.key][0]);
+    const d1 = createFlipDigit(initial[u.key][1]);
+    digitControllers[u.key] = [d0, d1];
+    pair.append(d0.el, d1.el);
+
+    unitBox.append(pair, el('span', 'flip-label', u.label));
+    row.append(unitBox);
+
+    if (idx < units.length - 1) {
+      const colon = el('div', 'flip-colon');
+      colon.append(el('span'), el('span'));
+      row.append(colon);
+    }
+  });
+
+  wrap.append(row);
+
+  return {
+    el: wrap,
+    target: targetMs,
+    tick(nowMs) {
+      const parts = getCountdownParts(this.target - nowMs);
+      units.forEach(u => {
+        const val = parts[u.key];
+        digitControllers[u.key][0].set(val[0]);
+        digitControllers[u.key][1].set(val[1]);
+      });
+    }
+  };
 }
 
 function parseEventDate(ev) {
@@ -175,7 +278,7 @@ async function loadEvents() {
     return;
   }
 
-  const countdownNodes = [];
+  const clocks = [];
 
   upcoming.forEach((ev, idx) => {
     const card = el('article', 'card event-card');
@@ -189,7 +292,7 @@ async function loadEvents() {
 
     const body = el('div', 'card-body');
     body.append(el('span', 'badge', idx === 0 ? 'Next race' : 'Upcoming'));
-    body.append(el('h3', null, ev.title || ev.name || ev.series || 'AMKRO Event'));
+    body.append(el('h3', 'event-title', ev.title || ev.name || ev.series || 'AMKRO Event'));
 
     const startMs = parseEventDate(ev);
     if (!Number.isNaN(startMs)) {
@@ -201,13 +304,13 @@ async function loadEvents() {
         hour: 'numeric',
         minute: '2-digit'
       });
-      body.append(el('p', 'muted', dateText));
+      body.append(el('p', 'muted event-date', dateText));
 
-      const cd = el('div', 'countdown', formatCountdown(startMs - Date.now()));
-      body.append(cd);
-      countdownNodes.push({ el: cd, target: startMs });
+      const clock = createFlipClock(startMs);
+      body.append(clock.el);
+      clocks.push(clock);
     } else if (ev.dateText || ev.when) {
-      body.append(el('p', 'muted', ev.dateText || ev.when));
+      body.append(el('p', 'muted event-date', ev.dateText || ev.when));
     }
 
     const actions = el('div', 'cta card-cta');
@@ -224,12 +327,10 @@ async function loadEvents() {
 
   observeReveals(listEl);
 
-  if (countdownNodes.length) {
+  if (clocks.length) {
     setInterval(() => {
       const t = Date.now();
-      countdownNodes.forEach(item => {
-        item.el.textContent = formatCountdown(item.target - t);
-      });
+      clocks.forEach(c => c.tick(t));
     }, 1000);
   }
 }
