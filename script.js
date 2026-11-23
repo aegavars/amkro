@@ -69,6 +69,36 @@ function createRectFlag(countryCode, fallbackEmoji) {
   return fallbackEmoji ? el('span', 'st-flag-text', fallbackEmoji) : null;
 }
 
+/* ====== Shared Standings Cache (Also Supplies Thumbnails to Upcoming Races) ====== */
+let STANDINGS_CACHE = null;
+
+async function fetchStandingsData() {
+  if (STANDINGS_CACHE) return STANDINGS_CACHE;
+  try {
+    const res = await fetch('data/standings.json', { cache: 'no-store' });
+    STANDINGS_CACHE = await res.json();
+  } catch (e) {
+    STANDINGS_CACHE = { events: [] };
+  }
+  return STANDINGS_CACHE;
+}
+
+function findMatchingSeriesBanner(eventTitle, standingsList) {
+  const norm = String(eventTitle || '')
+    .toLowerCase()
+    .replace(/\(.*?\)/g, '')
+    .split('-')[0]
+    .replace(/^amkro\s+/i, '')
+    .trim();
+  if (!norm) return '';
+
+  const match = standingsList.find(s => {
+    const sName = String(s.series || s.name || '').toLowerCase();
+    return sName.includes(norm) || norm.includes(sName.replace(/^amkro\s+/i, '').trim());
+  });
+  return match ? (match.thumbnail || match.banner || match.image || '') : '';
+}
+
 /* ====== Home Page: Upcoming Races & Live Countdowns ====== */
 function formatCountdown(ms) {
   if (ms <= 0) return 'LIVE / STARTED';
@@ -93,12 +123,18 @@ async function loadEvents() {
   if (!listEl) return;
 
   let events = [];
+  let standingsList = [];
+
   try {
-    const res = await fetch('data/events.json', { cache: 'no-store' });
-    const data = await res.json();
-    events = Array.isArray(data)
-      ? data
-      : (data.events || data.races || Object.values(data).find(v => Array.isArray(v)) || []);
+    const [evRes, stData] = await Promise.all([
+      fetch('data/events.json', { cache: 'no-store' }),
+      fetchStandingsData()
+    ]);
+    const evData = await evRes.json();
+    events = Array.isArray(evData)
+      ? evData
+      : (evData.events || evData.races || Object.values(evData).find(v => Array.isArray(v)) || []);
+    standingsList = Array.isArray(stData) ? stData : (stData.events || stData.standings || []);
   } catch (e) {
     events = [];
   }
@@ -120,9 +156,19 @@ async function loadEvents() {
   const countdownNodes = [];
 
   upcoming.forEach((ev, idx) => {
-    const card = el('article', 'card');
-    card.append(el('span', 'badge', idx === 0 ? 'Next race' : 'Upcoming'));
-    card.append(el('h3', null, ev.title || ev.name || ev.series || 'AMKRO Event'));
+    const card = el('article', 'card event-card');
+
+    // Add series banner image at top of card
+    const imgUrl = ev.thumbnail || ev.image || ev.banner || findMatchingSeriesBanner(ev.title || ev.name, standingsList);
+    const banner = el('div', 'st-banner');
+    if (imgUrl) {
+      banner.style.backgroundImage = `url("${imgUrl}")`;
+    }
+    card.append(banner);
+
+    const body = el('div', 'card-body');
+    body.append(el('span', 'badge', idx === 0 ? 'Next race' : 'Upcoming'));
+    body.append(el('h3', null, ev.title || ev.name || ev.series || 'AMKRO Event'));
 
     const startMs = parseEventDate(ev);
     if (!Number.isNaN(startMs)) {
@@ -134,13 +180,13 @@ async function loadEvents() {
         hour: 'numeric',
         minute: '2-digit'
       });
-      card.append(el('p', 'muted', dateText));
+      body.append(el('p', 'muted', dateText));
 
       const cd = el('div', 'countdown', formatCountdown(startMs - Date.now()));
-      card.append(cd);
+      body.append(cd);
       countdownNodes.push({ el: cd, target: startMs });
     } else if (ev.dateText || ev.when) {
-      card.append(el('p', 'muted', ev.dateText || ev.when));
+      body.append(el('p', 'muted', ev.dateText || ev.when));
     }
 
     const actions = el('div', 'cta');
@@ -149,8 +195,9 @@ async function loadEvents() {
     link.target = '_blank';
     link.rel = 'noopener';
     actions.append(link);
-    card.append(actions);
+    body.append(actions);
 
+    card.append(body);
     listEl.append(card);
   });
 
@@ -164,8 +211,9 @@ async function loadEvents() {
   }
 }
 
-/* ====== Series Standings (Ongoing & Finished, 3-Card Limit + Dropdown) ====== */
+/* ====== Series Standings + Interactive Calendar & Round Results Modal ====== */
 let ALL_STANDINGS = [];
+let UPCOMING_EVENTS_CACHE = [];
 let stQuery = '';
 let stFilter = 'ALL';
 let showAllOngoing = false;
@@ -176,8 +224,289 @@ function isOngoingSeries(item) {
   return status !== 'finished' && !status.startsWith('finished');
 }
 
+function buildRoundsForSeries(s) {
+  // 1. If standings.json already provides a rounds/schedule array, use it directly
+  if (Array.isArray(s.rounds) && s.rounds.length) {
+    return s.rounds;
+  }
+
+  // 2. Otherwise construct round list from progress "(completed/total)" + matching upcoming events
+  const match = String(s.progress || '').match(/\((\d+)\s*\/\s*(\d+)\)/);
+  const completedCount = match ? parseInt(match[1], 10) : 0;
+  const totalCount = match ? parseInt(match[2], 10) : (isOngoingSeries(s) ? 1 : 4);
+  const isFinishedSeries = !isOngoingSeries(s);
+
+  const baseName = String(s.series || s.name || '').toLowerCase().replace(/^amkro\s+/i, '').trim();
+  const matchingUpcoming = UPCOMING_EVENTS_CACHE.filter(ev => {
+    const t = String(ev.title || ev.name || '').toLowerCase();
+    return baseName && t.includes(baseName);
+  });
+
+  const rounds = [];
+  for (let r = 1; r <= totalCount; r++) {
+    const roundRegex = new RegExp(`\\(${r}\\s*/\\s*${totalCount}\\)`);
+    const matchedEv = matchingUpcoming.find(ev => roundRegex.test(String(ev.title || ev.name || '')));
+    const done = isFinishedSeries || r < completedCount || (r === completedCount && isFinishedSeries);
+    const isNext = !done && (r === completedCount || Boolean(matchedEv));
+
+    rounds.push({
+      round: r,
+      name: matchedEv ? (matchedEv.title || matchedEv.name) : `${s.series || s.name} — Round ${r}`,
+      track: matchedEv?.track || '',
+      date: matchedEv
+        ? new Date(parseEventDate(matchedEv)).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+        : (done ? 'Completed' : 'Scheduled'),
+      status: done ? 'COMPLETED' : (isNext ? 'NEXT / ACTIVE' : 'UPCOMING'),
+      url: matchedEv?.url || s.url || `https://paddock.worldsimseries.com/events/${s.id || ''}#/`,
+      qualifying: [],
+      race: []
+    });
+  }
+  return rounds;
+}
+
+function renderSessionTable(rows, emptyMsg) {
+  if (!Array.isArray(rows) || !rows.length) {
+    return el('p', 'muted', emptyMsg);
+  }
+  const table = el('table', 'results-table');
+  const thead = document.createElement('thead');
+  const headRow = document.createElement('tr');
+  ['POS', 'DRIVER', 'CAR / TEAM', 'TIME / GAP', 'PTS'].forEach(h => {
+    headRow.append(el('th', null, h));
+  });
+  thead.append(headRow);
+  table.append(thead);
+
+  const tbody = document.createElement('tbody');
+  rows.forEach((r, idx) => {
+    const tr = document.createElement('tr');
+    tr.append(el('td', 'st-pos', `P${r.position || r.pos || idx + 1}`));
+
+    const tdDriver = document.createElement('td', 'st-driver');
+    const flag = createRectFlag(r.countryCode, r.flag);
+    if (flag) tdDriver.append(flag);
+    tdDriver.append(el('span', null, r.name || r.fullName || r.driver || 'Driver'));
+    tr.append(tdDriver);
+
+    tr.append(el('td', 'muted', r.car || r.team || '—'));
+    tr.append(el('td', 'muted', r.time || r.gap || r.bestLap || '—'));
+    tr.append(el('td', 'st-pts', r.points !== undefined ? `${r.points}` : '—'));
+    tbody.append(tr);
+  });
+  table.append(tbody);
+  return table;
+}
+
+function openSeriesOverviewModal(s, initialRoundIndex = null) {
+  let modal = $('#seriesModal');
+  if (!modal) {
+    modal = el('div', 'blog-modal');
+    modal.id = 'seriesModal';
+
+    const inner = el('article', 'blog-modal-inner series-modal-inner');
+    const topbar = el('div', 'blog-modal-topbar');
+    const tag = el('span', 'st-series');
+    tag.id = 'seriesModalTag';
+    const closeBtn = el('button', 'btn', 'CLOSE ✕');
+    closeBtn.type = 'button';
+    closeBtn.onclick = closeSeriesModal;
+    topbar.append(tag, closeBtn);
+
+    const cover = el('div', 'blog-modal-cover');
+    cover.id = 'seriesModalCover';
+
+    const title = el('h2', 'blog-modal-title');
+    title.id = 'seriesModalTitle';
+
+    const meta = el('p', 'muted blog-modal-meta');
+    meta.id = 'seriesModalMeta';
+
+    const content = el('div', 'series-modal-content');
+    content.id = 'seriesModalContent';
+
+    inner.append(topbar, cover, title, meta, content);
+    modal.append(inner);
+    document.body.append(modal);
+
+    modal.addEventListener('click', e => {
+      if (e.target === modal) closeSeriesModal();
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && modal.classList.contains('open')) closeSeriesModal();
+    });
+  }
+
+  const rounds = buildRoundsForSeries(s);
+  const content = $('#seriesModalContent');
+
+  function showSeriesHome() {
+    $('#seriesModalTag').textContent = (s.progress || (isOngoingSeries(s) ? 'IN PROGRESS' : 'FINISHED')).toUpperCase();
+    $('#seriesModalTitle').textContent = s.series || s.name || 'AMKRO Series';
+    $('#seriesModalMeta').textContent = s.date ? `Season Start: ${s.date}` : '';
+
+    const coverEl = $('#seriesModalCover');
+    const imgUrl = s.thumbnail || s.banner || s.image;
+    if (imgUrl) {
+      coverEl.style.display = 'block';
+      coverEl.style.backgroundImage = `url("${imgUrl}")`;
+    } else {
+      coverEl.style.display = 'none';
+    }
+
+    content.textContent = '';
+
+    // Section 1: Championship Standings
+    const stSection = el('div', 'modal-section');
+    stSection.append(el('h3', 'modal-subheading', 'CHAMPIONSHIP STANDINGS'));
+
+    const drivers = Array.isArray(s.standings) && s.standings.length
+      ? s.standings
+      : (Array.isArray(s.top3) ? s.top3 : []);
+
+    if (drivers.length) {
+      const ul = el('ul', 'st-podium modal-podium');
+      drivers.forEach((row, idx) => {
+        const li = el('li');
+        li.append(el('span', 'st-pos', `P${row.position || idx + 1}`));
+        const dWrap = el('span', 'st-driver');
+        const flagNode = createRectFlag(row.countryCode, row.flag);
+        if (flagNode) dWrap.append(flagNode);
+        dWrap.append(el('span', null, row.fullName || row.name || row.driver || 'TBD'));
+        li.append(dWrap);
+        li.append(el('span', 'st-pts', row.points !== undefined ? `${row.points} pts` : ''));
+        ul.append(li);
+      });
+      stSection.append(ul);
+    } else {
+      stSection.append(el('p', 'muted', 'Championship points will appear after Round 1 concludes.'));
+    }
+
+    const wssActions = el('div', 'cta');
+    const wssStBtn = el('a', 'btn', 'OPEN FULL WSS STANDINGS TABLE →');
+    wssStBtn.href = s.standingsUrl || s.url || 'https://paddock.worldsimseries.com/';
+    wssStBtn.target = '_blank';
+    wssStBtn.rel = 'noopener';
+    wssActions.append(wssStBtn);
+    stSection.append(wssActions);
+    content.append(stSection);
+
+    // Section 2: Series Calendar & Clickable Rounds
+    const calSection = el('div', 'modal-section');
+    calSection.append(el('h3', 'modal-subheading', 'SERIES CALENDAR & ROUNDS (CLICK A ROUND FOR RESULTS)'));
+
+    const roundList = el('div', 'round-list');
+    rounds.forEach((r, idx) => {
+      const rowBtn = el('button', 'round-row');
+      rowBtn.type = 'button';
+      rowBtn.onclick = () => showRoundDetail(idx);
+
+      const left = el('div', 'round-row-left');
+      left.append(el('span', 'st-pos', `R${r.round || idx + 1}`));
+      const titleBox = el('div', 'round-row-info');
+      titleBox.append(el('strong', null, r.name || `Round ${idx + 1}`));
+      titleBox.append(el('small', 'muted', [r.track, r.date].filter(Boolean).join(' • ')));
+      left.append(titleBox);
+
+      const right = el('div', 'round-row-right');
+      right.append(el('span', 'st-series', r.status || 'ROUND'));
+      right.append(el('span', 'round-arrow', 'RESULTS →'));
+
+      rowBtn.append(left, right);
+      roundList.append(rowBtn);
+    });
+
+    calSection.append(roundList);
+    content.append(calSection);
+  }
+
+  function showRoundDetail(idx) {
+    const r = rounds[idx];
+    if (!r) return showSeriesHome();
+
+    content.textContent = '';
+
+    const backRow = el('div', 'round-detail-nav');
+    const backBtn = el('button', 'btn', '← BACK TO SERIES CALENDAR');
+    backBtn.type = 'button';
+    backBtn.onclick = showSeriesHome;
+    backRow.append(backBtn);
+    content.append(backRow);
+
+    const header = el('div', 'modal-section');
+    header.append(el('span', 'st-series', `ROUND ${r.round || idx + 1} • ${r.status || ''}`));
+    header.append(el('h3', 'modal-subheading', r.name || `Round ${idx + 1}`));
+    if (r.track || r.date) {
+      header.append(el('p', 'muted', [r.track, r.date].filter(Boolean).join(' • ')));
+    }
+    content.append(header);
+
+    // Qualifying Results
+    const qualSection = el('div', 'modal-section');
+    qualSection.append(el('h3', 'modal-subheading', 'QUALIFYING RESULTS'));
+    qualSection.append(
+      renderSessionTable(
+        r.qualifying,
+        r.status === 'UPCOMING'
+          ? 'Qualifying has not taken place yet.'
+          : 'Detailed qualifying classification is hosted on World Sim Series.'
+      )
+    );
+    content.append(qualSection);
+
+    // Race Results
+    const raceSection = el('div', 'modal-section');
+    raceSection.append(el('h3', 'modal-subheading', 'RACE RESULTS'));
+    raceSection.append(
+      renderSessionTable(
+        r.race,
+        r.status === 'UPCOMING'
+          ? 'Race session has not taken place yet.'
+          : 'Detailed race classification & lap times are hosted on World Sim Series.'
+      )
+    );
+
+    const extWrap = el('div', 'cta');
+    const extBtn = el('a', 'btn primary', 'VIEW OFFICIAL WSS SESSION RESULTS & LAPS →');
+    extBtn.href = r.resultsUrl || r.url || s.url || 'https://paddock.worldsimseries.com/';
+    extBtn.target = '_blank';
+    extBtn.rel = 'noopener';
+    extWrap.append(extBtn);
+    raceSection.append(extWrap);
+
+    content.append(raceSection);
+  }
+
+  if (initialRoundIndex !== null && rounds[initialRoundIndex]) {
+    showRoundDetail(initialRoundIndex);
+  } else {
+    showSeriesHome();
+  }
+
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeSeriesModal() {
+  const modal = $('#seriesModal');
+  if (modal) modal.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
 function buildStandingCard(s) {
-  const card = el('article', 'st-card');
+  const card = el('article', 'st-card st-card-clickable');
+  card.setAttribute('role', 'button');
+  card.setAttribute('tabindex', '0');
+  card.onclick = e => {
+    if (e.target.closest('a')) return;
+    openSeriesOverviewModal(s);
+  };
+  card.onkeydown = e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      openSeriesOverviewModal(s);
+    }
+  };
 
   const banner = el('div', 'st-banner');
   const imgUrl = s.thumbnail || s.banner || s.image;
@@ -222,11 +551,13 @@ function buildStandingCard(s) {
   }
 
   const actions = el('div', 'cta');
-  const btn = el('a', 'btn', 'FULL STANDINGS →');
-  btn.href = s.standingsUrl || s.url || 'https://paddock.worldsimseries.com/';
-  btn.target = '_blank';
-  btn.rel = 'noopener';
-  actions.append(btn);
+  const calBtn = el('button', 'btn primary', 'CALENDAR & RESULTS →');
+  calBtn.type = 'button';
+  calBtn.onclick = e => {
+    e.stopPropagation();
+    openSeriesOverviewModal(s);
+  };
+  actions.append(calBtn);
   body.append(actions);
 
   card.append(body);
@@ -305,9 +636,16 @@ async function loadStandings() {
   if (!container) return;
 
   try {
-    const res = await fetch('data/standings.json', { cache: 'no-store' });
-    const data = await res.json();
+    const [data, evRes] = await Promise.all([
+      fetchStandingsData(),
+      fetch('data/events.json', { cache: 'no-store' }).catch(() => null)
+    ]);
     ALL_STANDINGS = Array.isArray(data) ? data : (data.events || data.standings || data.series || []);
+
+    if (evRes && evRes.ok) {
+      const evJson = await evRes.json();
+      UPCOMING_EVENTS_CACHE = Array.isArray(evJson) ? evJson : (evJson.events || []);
+    }
 
     if ($('#stUpdated') && data.updated) {
       const d = new Date(data.updated);
@@ -532,17 +870,23 @@ async function loadBlog() {
 }
 
 /* ====== Socials Page: Live YouTube Feed & Instagram ====== */
+async function resolveYouTubeChannelId() {
+  try {
+    const res = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent('https://www.youtube.com/@AMKRacingOrganisation'));
+    const data = await res.json();
+    const html = data?.contents || '';
+    const match = html.match(/"channelId":"(UC[\w-]{22})"/);
+    if (match) return match[1];
+  } catch (e) {}
+  return '';
+}
+
 async function loadSocials() {
   const ytGrid = $('#ytGrid');
   if (ytGrid) {
-    // Supports UC... channel ID or UU... uploads playlist ID
-    const idVal = (ytGrid.dataset.channelId || ytGrid.dataset.playlistId || 'UU4X5-J0k8P3Q2w9L7mN6vBc').trim();
-    const feedParam = idVal.startsWith('UU') || idVal.startsWith('PL')
-      ? `playlist_id=${idVal}`
-      : `channel_id=${idVal}`;
-    const rawRss = `https://www.youtube.com/feeds/videos.xml?${feedParam}`;
     let videos = [];
 
+    // 1. Check local data/youtube.json first
     try {
       const localRes = await fetch('data/youtube.json', { cache: 'no-store' });
       if (localRes.ok) {
@@ -553,43 +897,49 @@ async function loadSocials() {
       videos = [];
     }
 
+    // 2. Otherwise resolve @AMKRacingOrganisation channel ID & fetch its RSS feed
     if (!videos.length) {
-      try {
-        const apiRes = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rawRss)}`);
-        const apiData = await apiRes.json();
-        if (apiData && Array.isArray(apiData.items) && apiData.items.length) {
-          videos = apiData.items.map(item => ({
-            title: item.title,
-            url: item.link,
-            thumbnail: item.thumbnail,
-            published: item.pubDate
-          }));
-        }
-      } catch (e) {
-        videos = [];
-      }
-    }
+      const explicitId = (ytGrid.dataset.channelId || ytGrid.dataset.playlistId || '').trim();
+      const channelId = explicitId || (await resolveYouTubeChannelId());
 
-    if (!videos.length) {
-      try {
-        const proxyRes = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(rawRss)}`);
-        const proxyData = await proxyRes.json();
-        if (proxyData && proxyData.contents) {
-          const xml = new DOMParser().parseFromString(proxyData.contents, 'text/xml');
-          const entries = Array.from(xml.querySelectorAll('entry'));
-          videos = entries.map(entry => {
-            const vidId = entry.querySelector('videoId')?.textContent || '';
-            return {
-              id: vidId,
-              title: entry.querySelector('title')?.textContent || 'AMKRO Broadcast',
-              url: entry.querySelector('link')?.getAttribute('href') || `https://www.youtube.com/watch?v=${vidId}`,
-              thumbnail: vidId ? `https://i.ytimg.com/vi/${vidId}/hqdefault.jpg` : '',
-              published: entry.querySelector('published')?.textContent || ''
-            };
-          });
+      if (channelId) {
+        const feedParam = channelId.startsWith('UU') || channelId.startsWith('PL')
+          ? `playlist_id=${channelId}`
+          : `channel_id=${channelId}`;
+        const rawRss = `https://www.youtube.com/feeds/videos.xml?${feedParam}`;
+
+        try {
+          const apiRes = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rawRss)}`);
+          const apiData = await apiRes.json();
+          if (apiData && Array.isArray(apiData.items) && apiData.items.length) {
+            videos = apiData.items.map(item => ({
+              title: item.title,
+              url: item.link,
+              thumbnail: item.thumbnail,
+              published: item.pubDate
+            }));
+          }
+        } catch (e) {}
+
+        if (!videos.length) {
+          try {
+            const proxyRes = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(rawRss)}`);
+            const proxyData = await proxyRes.json();
+            if (proxyData?.contents) {
+              const xml = new DOMParser().parseFromString(proxyData.contents, 'text/xml');
+              videos = Array.from(xml.querySelectorAll('entry')).map(entry => {
+                const vidId = entry.querySelector('videoId')?.textContent || '';
+                return {
+                  id: vidId,
+                  title: entry.querySelector('title')?.textContent || 'AMKRO Broadcast',
+                  url: entry.querySelector('link')?.getAttribute('href') || `https://www.youtube.com/watch?v=${vidId}`,
+                  thumbnail: vidId ? `https://i.ytimg.com/vi/${vidId}/hqdefault.jpg` : '',
+                  published: entry.querySelector('published')?.textContent || ''
+                };
+              });
+            }
+          } catch (e) {}
         }
-      } catch (e) {
-        videos = [];
       }
     }
 
