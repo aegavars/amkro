@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-23T16:55:04.812923+00:00",
+  "updated": "2026-11-24T03:40:52.656624+00:00",
   "organizationUrl": "https://paddock.worldsimseries.com/series-manager#/",
   "events": [
     {
@@ -130,44 +130,6 @@
       ]
     },
     {
-      "id": "295982",
-      "seriesId": "2655",
-      "name": "TATUUS WORLD SERIES OPEN",
-      "series": "TATUUS WORLD SERIES OPEN",
-      "status": "ongoing",
-      "progress": "In progress (16/16)",
-      "date": "21st Nov 19:04",
-      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202608032105216a7102915ddb2.jpeg",
-      "url": "https://paddock.worldsimseries.com/events/295982#/",
-      "standingsUrl": "https://paddock.worldsimseries.com/events/295982/standings#/",
-      "top3": [
-        {
-          "position": 1,
-          "name": "A. E. Gavars",
-          "fullName": "A. E. Gavars",
-          "countryCode": "LV",
-          "flag": "🇱🇻",
-          "points": "74"
-        },
-        {
-          "position": 2,
-          "name": "E. Ghelos",
-          "fullName": "E. Ghelos",
-          "countryCode": "GR",
-          "flag": "🇬🇷",
-          "points": "48"
-        },
-        {
-          "position": 3,
-          "name": "C. Mach",
-          "fullName": "C. Mach",
-          "countryCode": "US",
-          "flag": "🇺🇸",
-          "points": "40"
-        }
-      ]
-    },
-    {
       "id": "295963",
       "seriesId": "2652",
       "name": "TATUUS WORLD SERIES SEASON 4",
@@ -185,23 +147,23 @@
           "fullName": "C. Mach",
           "countryCode": "US",
           "flag": "🇺🇸",
-          "points": "451"
+          "points": "514"
         },
         {
           "position": 2,
+          "name": "I. Budzowski",
+          "fullName": "I. Budzowski",
+          "countryCode": "PL",
+          "flag": "🇵🇱",
+          "points": "376"
+        },
+        {
+          "position": 3,
           "name": "A. E. Gavars",
           "fullName": "A. E. Gavars",
           "countryCode": "LV",
           "flag": "🇱🇻",
           "points": "360"
-        },
-        {
-          "position": 3,
-          "name": "I. Budzowski",
-          "fullName": "I. Budzowski",
-          "countryCode": "PL",
-          "flag": "🇵🇱",
-          "points": "331"
         }
       ]
     },
@@ -505,6 +467,44 @@
           "fullName": "A. E. Gavars",
           "countryCode": "LV",
           "flag": "🇱🇻",
+          "points": "40"
+        }
+      ]
+    },
+    {
+      "id": "295982",
+      "seriesId": "2655",
+      "name": "TATUUS WORLD SERIES OPEN",
+      "series": "TATUUS WORLD SERIES OPEN",
+      "status": "finished",
+      "progress": "Finished (16/16)",
+      "date": "21st Nov 19:04",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202608032105216a7102915ddb2.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/295982#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/295982/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "LV",
+          "flag": "🇱🇻",
+          "points": "74"
+        },
+        {
+          "position": 2,
+          "name": "E. Ghelos",
+          "fullName": "E. Ghelos",
+          "countryCode": "GR",
+          "flag": "🇬🇷",
+          "points": "48"
+        },
+        {
+          "position": 3,
+          "name": "C. Mach",
+          "fullName": "C. Mach",
+          "countryCode": "US",
+          "flag": "🇺🇸",
           "points": "40"
         }
       ]
