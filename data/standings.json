@@ -1,7 +1,20 @@
 {
-  "updated": "2026-11-24T16:46:30.412695+00:00",
+  "updated": "2026-11-25T01:49:50.742473+00:00",
   "organizationUrl": "https://paddock.worldsimseries.com/series-manager#/",
   "events": [
+    {
+      "id": "306850",
+      "seriesId": "2764",
+      "name": "MINI CUP UK",
+      "series": "MINI CUP UK",
+      "status": "ongoing",
+      "progress": "In progress (1/8)",
+      "date": "23rd Jan 18:46",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202611201441296b005c19d46f4.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/306850#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/306850/standings#/",
+      "top3": []
+    },
     {
       "id": "305753",
       "seriesId": "2757",
