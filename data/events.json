@@ -9,7 +9,7 @@
       "description": ""
     },
     {
-      "name": "ALFA ROMEO CUP (3/8)",
+      "name": "IN PROGRESS - CONNECT NOW!",
       "start": "2026-11-27T22:00:00+01:00",
       "durationHours": 2,
       "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202611032024336aea43018815e.jpeg",
@@ -38,6 +38,14 @@
       "durationHours": 2,
       "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202611111348016af472114b5a0.jpeg",
       "url": "https://paddock.worldsimseries.com/events/305742",
+      "description": ""
+    },
+    {
+      "name": "ALFA ROMEO CUP (4/8)",
+      "start": "2026-12-04T22:00:00+01:00",
+      "durationHours": 2,
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202611032024336aea43018815e.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/305050",
       "description": ""
     },
     {
