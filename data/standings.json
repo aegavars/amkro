@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-26T16:03:46.767490+00:00",
+  "updated": "2026-11-27T01:21:44.042241+00:00",
   "organizationUrl": "https://paddock.worldsimseries.com/series-manager#/",
   "events": [
     {
@@ -139,44 +139,6 @@
           "countryCode": "LV",
           "flag": "🇱🇻",
           "points": "25"
-        }
-      ]
-    },
-    {
-      "id": "295963",
-      "seriesId": "2652",
-      "name": "TATUUS WORLD SERIES SEASON 4",
-      "series": "TATUUS WORLD SERIES SEASON 4",
-      "status": "ongoing",
-      "progress": "In progress (12/12)",
-      "date": "22nd Nov 19:44",
-      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202608030142246a6ff20003bfb.jpeg",
-      "url": "https://paddock.worldsimseries.com/events/295963#/",
-      "standingsUrl": "https://paddock.worldsimseries.com/events/295963/standings#/",
-      "top3": [
-        {
-          "position": 1,
-          "name": "C. Mach",
-          "fullName": "C. Mach",
-          "countryCode": "US",
-          "flag": "🇺🇸",
-          "points": "514"
-        },
-        {
-          "position": 2,
-          "name": "I. Budzowski",
-          "fullName": "I. Budzowski",
-          "countryCode": "PL",
-          "flag": "🇵🇱",
-          "points": "376"
-        },
-        {
-          "position": 3,
-          "name": "A. E. Gavars",
-          "fullName": "A. E. Gavars",
-          "countryCode": "LV",
-          "flag": "🇱🇻",
-          "points": "360"
         }
       ]
     },
@@ -519,6 +481,44 @@
           "countryCode": "US",
           "flag": "🇺🇸",
           "points": "40"
+        }
+      ]
+    },
+    {
+      "id": "295963",
+      "seriesId": "2652",
+      "name": "TATUUS WORLD SERIES SEASON 4",
+      "series": "TATUUS WORLD SERIES SEASON 4",
+      "status": "finished",
+      "progress": "Finished (12/12)",
+      "date": "22nd Nov 19:44",
+      "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202608030142246a6ff20003bfb.jpeg",
+      "url": "https://paddock.worldsimseries.com/events/295963#/",
+      "standingsUrl": "https://paddock.worldsimseries.com/events/295963/standings#/",
+      "top3": [
+        {
+          "position": 1,
+          "name": "C. Mach",
+          "fullName": "C. Mach",
+          "countryCode": "US",
+          "flag": "🇺🇸",
+          "points": "559"
+        },
+        {
+          "position": 2,
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "LV",
+          "flag": "🇱🇻",
+          "points": "432"
+        },
+        {
+          "position": 3,
+          "name": "I. Budzowski",
+          "fullName": "I. Budzowski",
+          "countryCode": "PL",
+          "flag": "🇵🇱",
+          "points": "376"
         }
       ]
     },
