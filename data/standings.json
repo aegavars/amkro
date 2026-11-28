@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-27T15:52:07.214221+00:00",
+  "updated": "2026-11-28T00:55:14.447831+00:00",
   "organizationUrl": "https://paddock.worldsimseries.com/series-manager#/",
   "events": [
     {
@@ -34,7 +34,7 @@
       "name": "ALFA ROMEO CUP",
       "series": "ALFA ROMEO CUP",
       "status": "ongoing",
-      "progress": "In progress (3/8)",
+      "progress": "In progress (4/8)",
       "date": "1st Jan 21:39",
       "thumbnail": "https://wss-turbo.b-cdn.net/event_list_image/202611032024336aea43018815e.jpeg",
       "url": "https://paddock.worldsimseries.com/events/305054#/",
@@ -46,23 +46,23 @@
           "fullName": "S. D. Amaro",
           "countryCode": "FR",
           "flag": "🇫🇷",
-          "points": "37"
+          "points": "62"
         },
         {
           "position": 2,
-          "name": "M. Venuti",
-          "fullName": "M. Venuti",
-          "countryCode": "IT",
-          "flag": "🇮🇹",
-          "points": "26"
+          "name": "A. E. Gavars",
+          "fullName": "A. E. Gavars",
+          "countryCode": "LV",
+          "flag": "🇱🇻",
+          "points": "38"
         },
         {
           "position": 3,
-          "name": "S. B. Stattin",
-          "fullName": "S. B. Stattin",
-          "countryCode": "SE",
-          "flag": "🇸🇪",
-          "points": "25"
+          "name": "C. Charpentier",
+          "fullName": "C. Charpentier",
+          "countryCode": "FR",
+          "flag": "🇫🇷",
+          "points": "30"
         }
       ]
     },
